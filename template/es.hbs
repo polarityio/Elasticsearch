@@ -1,0 +1,10 @@
+<div class ="es-url section">
+    <a href="{{block.data.details.url}}"> (View in Kibana) </a>
+</div>
+
+<div class="num">
+{{#if block.data.details.hits}}
+<span class="number">Total Number of Results: </span>
+    <b>{{block.data.details.hits}}</b>
+{{/if}}
+</div>
