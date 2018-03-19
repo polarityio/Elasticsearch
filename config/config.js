@@ -18,7 +18,7 @@ module.exports = {
         {
             "key"          : "host",
             "name"         : "Elasticsearch Host",
-            "description"  : "URL for Elasticsearch instance, please do not include https:// in your url",
+            "description"  : "URL for Elasticsearch instance",
             "default"      : "",
             "type"         : "text",
             "userCanEdit" : true,
