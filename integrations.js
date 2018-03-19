@@ -16,7 +16,7 @@ function doLookup(entities, options, cb) {
     let lookupResults = [];
 
     async.each(entities, function (entityObj, next) {
-        if (entityObj.isIPv4 || entityObj.isIPv6) {
+        if (entityObj.isIPv4 || entityObj.isIPv6 && !entityObj.isPrivateIP) {
             _lookupEntity(entityObj, options, function (err, result) {
                 if (err) {
                     next(err);
@@ -67,7 +67,7 @@ function validateOptions(userOptions, cb) {
 
 
 function _lookupEntity(entityObj, options, cb) {
-    let uri = 'http://' + options.host + ':' + options.port + '/' + options.index + '/' + options.type + '/_search?pretty';
+    let uri = options.host + ':' + options.port + '/' + options.index + '/' + options.type + '/_search?pretty';
 
     var kibana = options.uiHostname;
 
@@ -189,7 +189,3 @@ module.exports = {
     doLookup: doLookup,
     validateOptions: validateOptions
 };
-
-
-
-
