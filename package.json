@@ -2,11 +2,11 @@
   "main": "./integrations.js",
   "name": "Elasticsearch",
   "description": "Search and Analyze your data in real-time",
-  "version": "1.0.1-beta",
+  "version": "3.0.0-beta",
   "private": true,
   "dependencies": {
-    "request": "^2.75",
-    "lodash": "^4.16",
-    "async": "^2.0"
+    "request": "2.88",
+    "lodash": "4.17",
+    "async": "2.6"
   }
 }
