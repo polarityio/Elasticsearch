@@ -1,4 +1,3 @@
 'use strict';
 
-polarity.export = PolarityComponent.extend({
-});
+polarity.export = PolarityComponent.extend({});
