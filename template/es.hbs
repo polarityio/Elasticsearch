@@ -1,10 +1,74 @@
-<div class ="es-url section">
-    <a href="{{block.data.details.url}}"> (View in Kibana) </a>
-</div>
-
-<div class="num">
-{{#if block.data.details.hits}}
-<span class="number">Total Number of Results: </span>
-    <b>{{block.data.details.hits}}</b>
+{{#if block.userOptions.kibanaUrl}}
+    <a class="p-link" href="{{block.userOptions.kibanaUrl}}">Open Kibana {{fa-icon "external-link" class="external-icon"}}</a>
 {{/if}}
-</div>
+
+{{#each details.results as |item index|}}
+    {{#if (gt index 0)}}
+        <hr>
+    {{/if}}
+    <div class="title-block">
+        {{#if block.userOptions.documentTitleField}}
+            <span class="p-title">{{fa-icon "file-alt" fixedWidth=true}} {{get item.hit._source
+                                                                               block.userOptions.documentTitleField}}</span>
+        {{else}}
+            <span class="p-title">Document: {{item.hit._id}}</span>
+        {{/if}}
+    </div>
+
+
+    <ul class="nav nav-tabs">
+        {{#if block.userOptions.highlightEnabled}}
+            <li class="nav-item">
+                <a {{action "showHighlights" index}} class="nav-link {{if item.showHighlights "active"}}" href="#">Highlights</a>
+            </li>
+        {{/if}}
+        <li class="nav-item">
+            <a {{action "showSource" index}} class="nav-link {{if item.showSource "active"}}" href="#">_source</a>
+        </li>
+        <li class="nav-item">
+            <a {{action "showTable" index}} class="nav-link {{if item.showTable "active"}}" href="#">Table</a>
+        </li>
+        <li class="nav-item">
+            <a {{action "showJson" index}} class="nav-link {{if item.showJson "active"}}" href="#">JSON</a>
+        </li>
+    </ul>
+
+    {{#if item.showHighlights}}
+        <div class="tab-container">
+            {{#if block.isLoadingDetails}}
+                <span class="p-footnote">Loading Highlights ...</span>
+            {{else}}
+                {{#each (get details (concat "highlights." item.hit._id)) as |highlight|}}
+                    <div class="fields-block">
+                        <span class="field-key">{{highlight.fieldName}}</span>
+                        {{#each highlight.fieldValues as |fieldValue|}}
+                            <span class="field-value">{{{fieldValue}}}</span>
+                        {{/each}}
+                    </div>
+                {{/each}}
+            {{/if}}
+        </div>
+    {{/if}}
+
+
+    {{#if item.showSource}}
+    <div class="tab-container fields-block scrollable-block">
+        {{#each-in item.sourceStringified as |key value|}}
+            <span class="field-key">{{key}}:</span><span class="field-value">{{value}}</span>
+        {{/each-in}}
+    </div>
+    {{/if}}
+
+    {{#if item.showTable}}
+    <div class="tab-container fields-table">
+        {{object-to-table item.hit._source}}
+    </div>
+    {{/if}}
+
+    {{#if item.showJson}}
+    <div class="tab-container json-block">
+        <pre>{{{item.json}}}</pre>
+    </div>
+    {{/if}}
+
+{{/each}}
