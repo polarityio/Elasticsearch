@@ -2,8 +2,7 @@
 
 polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
-  init: function() {
-    this._super(...arguments);
+  onDetailsLoaded() {
     const highlightEnabled = this.get('block.userOptions.highlightEnabled');
     this.get('details.results').forEach((result, index) => {
       if (highlightEnabled) {
@@ -19,6 +18,11 @@ polarity.export = PolarityComponent.extend({
         Ember.set(result, 'showSource', true);
       }
     });
+  },
+  onDetailsError(err) {
+    if (err) {
+      this.set('block.errorMsg', JSON.stringify(err));
+    }
   },
   actions: {
     showHighlights: function(index) {
