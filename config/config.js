@@ -12,6 +12,14 @@ module.exports = {
       file: './template/es.hbs'
     }
   },
+  summary: {
+    component: {
+      file: './component/es-summary.js'
+    },
+    template: {
+      file: './template/es-summary.hbs'
+    }
+  },
   request: {
     // Provide the path to your certFile. Leave an empty string to ignore this option.
     // Relative paths are relative to the integration's root directory
@@ -122,6 +130,15 @@ module.exports = {
         'Comma delimited list of "_source" fields to include as part of the summary (no spaces between commas).  These fields must be returned by your search query.',
       default: 'index',
       type: 'text',
+      userCanEdit: true,
+      adminOnly: false
+    },
+    {
+      key: 'includeFieldNameInSummary',
+      name: 'Include Field Name in Summary',
+      description: 'If checked, field names will be included as part of the summary fields.',
+      default: true,
+      type: 'boolean',
       userCanEdit: true,
       adminOnly: false
     },
