@@ -125,12 +125,14 @@ function onDetails(lookupObject, options, cb) {
 
     body.hits.hits.forEach((hit) => {
       const resultHighlights = [];
-      for (const [fieldName, fieldValues] of Object.entries(hit.highlight)) {
-        if (!fieldName.endsWith('.keyword')) {
-          resultHighlights.push({
-            fieldName,
-            fieldValues
-          });
+      if (hit.highlight) {
+        for (const [fieldName, fieldValues] of Object.entries(hit.highlight)) {
+          if (!fieldName.endsWith('.keyword')) {
+            resultHighlights.push({
+              fieldName,
+              fieldValues
+            });
+          }
         }
       }
       lookupObject.data.details.highlights[hit._id] = resultHighlights;
@@ -189,22 +191,28 @@ function _buildDoLookupQuery(entities, options) {
 }
 
 function _getSummaryTags(searchItemResult, summaryFields) {
-  const tags = new Set();
+  const tags = new Map();
 
   searchItemResult.hits.hits.forEach((hit) => {
     if (!hit._source) {
-      tags.add('Missing _source field');
+      tags.set('Missing _source field', {
+        field: '',
+        value: 'Missing _source field'
+      });
     } else {
       summaryFields.forEach((field) => {
         const summaryField = _.get(hit._source, field);
         if (summaryField) {
-          tags.add(summaryField);
+          tags.set(`${field}${summaryField}`, {
+            field: field,
+            value: summaryField
+          });
         }
       });
     }
   });
 
-  return [...tags];
+  return Array.from(tags.values());
 }
 
 function _lookupEntityGroup(entityGroup, summaryFields, options, cb) {
@@ -266,9 +274,10 @@ function _lookupEntityGroup(entityGroup, summaryFields, options, cb) {
         entityGroupResults.push({
           entity: entityGroup[index],
           data: {
-            summary: _getSummaryTags(searchItemResult, summaryFields),
+            summary: [],
             details: {
               results: hits,
+              tags: _getSummaryTags(searchItemResult, summaryFields),
               queries: queryObject.multiSearchQueries
             }
           }
