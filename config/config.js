@@ -9,7 +9,7 @@ module.exports = {
       file: './component/es.js'
     },
     template: {
-      file: './template/es.hbs'
+      file: './templates/es.hbs'
     }
   },
   summary: {
@@ -17,7 +17,7 @@ module.exports = {
       file: './component/es-summary.js'
     },
     template: {
-      file: './template/es-summary.hbs'
+      file: './templates/es-summary.hbs'
     }
   },
   request: {
