@@ -158,8 +158,17 @@ function onDetails(lookupObject, options, cb) {
   });
 }
 
+/**
+ * Used to escape double quotes in entities and remove any newlines
+ * @param entityValue
+ * @returns {*}
+ */
+function escapeEntityValue(entityValue) {
+  return entityValue.replace(/(\r\n|\n|\r)/gm, '').replace(/"/g, '\\"');
+}
+
 function _buildOnDetailsQuery(entityObj, documentIds, options) {
-  const highlightQuery = options.highlightQuery.replace(entityTemplateReplacementRegex, entityObj.value);
+  const highlightQuery = options.highlightQuery.replace(entityTemplateReplacementRegex, escapeEntityValue(entityObj.value));
   return {
     _source: false,
     query: {
@@ -198,7 +207,7 @@ function _buildDoLookupQuery(entities, options) {
   const multiSearchQueries = [];
 
   entities.forEach((entityObj) => {
-    const query = options.query.replace(entityTemplateReplacementRegex, entityObj.value);
+    const query = options.query.replace(entityTemplateReplacementRegex, escapeEntityValue(entityObj.value));
     multiSearchString += `{}\n${query}\n`;
     multiSearchQueries.push(query);
   });
