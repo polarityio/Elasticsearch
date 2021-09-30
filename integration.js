@@ -42,6 +42,10 @@ function startup(logger) {
     defaults.rejectUnauthorized = config.request.rejectUnauthorized;
   }
 
+  if(typeof config.request.secureProtocol === 'string' && config.request.secureProtocol.length > 0){
+    defaults.secureProtocol = config.request.secureProtocol;
+  }
+
   requestWithDefaults = request.defaults(defaults);
 }
 

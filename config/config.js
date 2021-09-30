@@ -41,7 +41,10 @@ module.exports = {
      * to servers without valid SSL certificates.  Please note that we do NOT recommending setting this
      * to false in a production environment.
      */
-    rejectUnauthorized: true
+    rejectUnauthorized: true,
+    // Some ES server may require that you force TLS1.2 to be used.  To do this, set the `secureProtocol`
+    // property to 'TLSv1_2_method'.
+    secureProtocol: ''
   },
   options: [
     {
