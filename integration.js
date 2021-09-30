@@ -137,21 +137,23 @@ function onDetails(lookupObject, options, cb) {
     if (httpErr) {
       return cb(httpErr);
     }
-
-    body.hits.hits.forEach((hit) => {
-      const resultHighlights = [];
-      if (hit.highlight) {
-        for (const [fieldName, fieldValues] of Object.entries(hit.highlight)) {
-          if (!fieldName.endsWith('.keyword')) {
-            resultHighlights.push({
-              fieldName,
-              fieldValues
-            });
+    
+    if(body && body.hits && Array.isArray(body.hits.hits)){
+      body.hits.hits.forEach((hit) => {
+        const resultHighlights = [];
+        if (hit.highlight) {
+          for (const [fieldName, fieldValues] of Object.entries(hit.highlight)) {
+            if (!fieldName.endsWith('.keyword')) {
+              resultHighlights.push({
+                fieldName,
+                fieldValues
+              });
+            }
           }
         }
-      }
-      lookupObject.data.details.highlights[hit._id] = resultHighlights;
-    });
+        lookupObject.data.details.highlights[hit._id] = resultHighlights;
+      });
+    }
 
     log.debug({ onDetails: lookupObject.data }, 'onDetails data result');
     cb(null, lookupObject.data);
