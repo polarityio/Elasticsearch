@@ -49,6 +49,30 @@ function startup(logger) {
   requestWithDefaults = request.defaults(defaults);
 }
 
+/**
+ * Returns the appropriate auth headers that should be added any requests
+ * @param options, user options for the integration
+ * @param headers, additional headers you want added to the returned header object
+ * @returns {{Authorization: string}|{}}
+ */
+function getAuthHeader(options, headers = {}) {
+  if (options.username && options.password) {
+    return {
+      ...headers,
+      Authorization: `Basic ${Buffer.from(`${options.username}:${options.password}`).toString('base64')}`
+    };
+  } else if (options.apiKey) {
+    return {
+      ...headers,
+      Authorization: `ApiKey ${options.apiKey}`
+    };
+  } else {
+    return {
+      ...headers
+    };
+  }
+}
+
 function doLookup(entities, options, cb) {
   let self = this;
   let lookupResults = [];
@@ -103,22 +127,9 @@ function onDetails(lookupObject, options, cb) {
     uri: `${options.url}/${options.index}/_search`,
     method: 'GET',
     body: _buildOnDetailsQuery(lookupObject.entity, documentIds, options),
+    headers: getAuthHeader(options),
     json: true
   };
-
-  if (
-    typeof options.username === 'string' &&
-    options.username.length > 0 &&
-    typeof options.password === 'string' &&
-    options.password.length > 0
-  ) {
-    requestOptions.auth = {
-      user: options.username,
-      pass: options.password
-    };
-    // requestOptions.headers.Authorization =
-    //   'Basic ' + Buffer.from(`${options.username}:${options.password}`).toString('base64');
-  }
 
   log.debug({ onDetailsQuery: requestOptions }, 'onDetails Request Payload');
   lookupObject.data.details.highlights = {};
@@ -224,16 +235,11 @@ function _lookupEntityGroup(entityGroup, summaryFields, options, cb) {
   const requestOptions = {
     uri: `${options.url}/${options.index}/_msearch`,
     method: 'GET',
-    headers: {
+    headers: getAuthHeader(options, {
       'Content-Type': 'application/x-ndjson'
-    },
+    }),
     body: queryObject.multiSearchString
   };
-
-  if (options.username && options.password) {
-    requestOptions.headers.Authorization =
-      'Basic ' + Buffer.from(`${options.username}:${options.password}`).toString('base64');
-  }
 
   log.debug({ requestOptions: requestOptions }, 'lookupEntityGroup Request Payload');
 
