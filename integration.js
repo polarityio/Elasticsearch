@@ -114,30 +114,29 @@ function doLookup(entities, options, cb) {
   });
 }
 
-function onDetails(lookupObject, options, cb) {
+function onMessage(payload, options, cb){
   if (options.highlightEnabled === false) {
-    return cb(null, lookupObject.data);
+    return cb(null, {});
   }
 
-  const documentIds = lookupObject.data.details.results.map((item) => {
-    return item.hit._id;
-  });
+  const highlights = {};
+
+  const { documentIds, entity } = payload;
 
   const requestOptions = {
     uri: `${options.url}/${options.index}/_search`,
     method: 'GET',
-    body: _buildOnDetailsQuery(lookupObject.entity, documentIds, options),
+    body: _buildOnDetailsQuery(entity, documentIds, options),
     headers: getAuthHeader(options),
     json: true
   };
 
-  log.debug({ onDetailsQuery: requestOptions }, 'onDetails Request Payload');
-  lookupObject.data.details.highlights = {};
+  log.debug({ onMessageQuery: requestOptions }, 'onMessage Request Payload');
   requestWithDefaults(requestOptions, function(httpErr, response, body) {
     if (httpErr) {
       return cb(httpErr);
     }
-    
+
     if(body && body.hits && Array.isArray(body.hits.hits)){
       body.hits.hits.forEach((hit) => {
         const resultHighlights = [];
@@ -151,12 +150,14 @@ function onDetails(lookupObject, options, cb) {
             }
           }
         }
-        lookupObject.data.details.highlights[hit._id] = resultHighlights;
+        highlights[hit._id] = resultHighlights;
       });
     }
 
-    log.debug({ onDetails: lookupObject.data }, 'onDetails data result');
-    cb(null, lookupObject.data);
+    log.debug({ onDetails: highlights }, 'onMessage highlights data result');
+    cb(null, {
+      highlights
+    });
   });
 }
 
@@ -493,8 +494,9 @@ var _createJsonErrorObject = function(msg, pointer, httpCode, code, title, meta)
 };
 
 module.exports = {
-  startup: startup,
-  doLookup: doLookup,
-  validateOptions: validateOptions,
-  onDetails: onDetails
+  startup,
+  doLookup,
+  validateOptions,
+  onMessage
+  //onDetails: onDetails
 };

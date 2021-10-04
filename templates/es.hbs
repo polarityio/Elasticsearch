@@ -45,14 +45,19 @@
 
     {{#if item.showHighlights}}
         <div class="tab-container">
-            {{#each (get details (concat "highlights." item.hit._id)) as |highlight|}}
-                <div class="fields-block">
-                    <span class="field-key">{{highlight.fieldName}}</span>
-                    {{#each highlight.fieldValues as |fieldValue|}}
-                        <span class="field-value">{{{fieldValue}}}</span>
-                    {{/each}}
-                </div>
-            {{/each}}
+            {{#if loadingHighlights}}
+                {{fa-icon icon="spinner-third" fixedWidth=true spin=true}} Loading Highlights ...
+            {{else}}
+                {{#each (get details (concat "highlights." item.hit._id)) as |highlight|}}
+                    <div class="fields-block">
+                        <span class="field-key">{{highlight.fieldName}}</span>
+                        {{#each highlight.fieldValues as |fieldValue|}}
+                            <span class="field-value">{{{fieldValue}}}</span>
+                        {{/each}}
+                    </div>
+                {{/each}}
+            {{/if}}
+
         </div>
     {{/if}}
 
