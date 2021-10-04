@@ -47,6 +47,8 @@
         <div class="tab-container">
             {{#if loadingHighlights}}
                 {{fa-icon icon="spinner-third" fixedWidth=true spin=true}} Loading Highlights ...
+            {{else if hadHighlightLoadingError}}
+                <span>Unable to load highlights</span>
             {{else}}
                 {{#each (get details (concat "highlights." item.hit._id)) as |highlight|}}
                     <div class="fields-block">
@@ -57,7 +59,6 @@
                     </div>
                 {{/each}}
             {{/if}}
-
         </div>
     {{/if}}
 

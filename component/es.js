@@ -2,6 +2,8 @@
 
 polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
+  hadHighlightLoadingError: false,
+  loadingHighlights: false,
   init() {
     this._super(...arguments);
     const highlightEnabled = this.get('block.userOptions.highlightEnabled');
@@ -112,10 +114,16 @@ polarity.export = PolarityComponent.extend({
     this.sendIntegrationMessage(payload)
       .then((result) => {
         this.set('details.highlights', result.highlights);
+        this.set('hadHighlightLoadingError', false);
       })
-      .catch((err) => {})
+      .catch((err) => {
+        console.info(err);
+        this.set('block.errorMsg', err.meta && err.meta.detail ? err.meta.detail : 'Unexpected error encountered loading highlights.');
+        this.set('hadHighlightLoadingError', true);
+      })
       .finally(() => {
         this.set('loadingHighlights', false);
+
       });
   }
 });

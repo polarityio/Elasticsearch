@@ -134,7 +134,10 @@ function onMessage(payload, options, cb){
   log.debug({ onMessageQuery: requestOptions }, 'onMessage Request Payload');
   requestWithDefaults(requestOptions, function(httpErr, response, body) {
     if (httpErr) {
-      return cb(httpErr);
+      return cb({
+        detail: 'Encountered an error loading highlights',
+        error: httpErr
+      });
     }
 
     if(body && body.hits && Array.isArray(body.hits.hits)){
@@ -152,6 +155,11 @@ function onMessage(payload, options, cb){
         }
         highlights[hit._id] = resultHighlights;
       });
+    } else {
+      log.error({ body }, 'Error processing highlight results');
+      return cb({
+        detail: 'Error processing highlight results'
+      })
     }
 
     log.debug({ onDetails: highlights }, 'onMessage highlights data result');
