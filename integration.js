@@ -420,8 +420,24 @@ function _handleRestErrors(response, body) {
           }
         );
       } else {
-        return null;
+        const hasQueryError = body.responses.find((response) => {
+          return typeof response.error !== 'undefined';
+        });
+        if(hasQueryError){
+          return _createJsonErrorPayload(
+              'Search query error encoutered.  Please check your Search Query syntax.',
+              null,
+              response.statusCode,
+              '7',
+              'There is an error with the search query.',
+              {
+                body: body
+              }
+          );
+        }
       }
+
+      return null;
       break;
   }
 

@@ -32,10 +32,10 @@
             </li>
         {{/if}}
         <li class="nav-item">
-            <a {{action "showSource" index}} class="nav-link {{if item.showSource "active"}}" href="#">_source</a>
+            <a {{action "showTable" index}} class="nav-link {{if item.showTable "active"}}" href="#">Table</a>
         </li>
         <li class="nav-item">
-            <a {{action "showTable" index}} class="nav-link {{if item.showTable "active"}}" href="#">Table</a>
+            <a {{action "showSource" index}} class="nav-link {{if item.showSource "active"}}" href="#">_source</a>
         </li>
         <li class="nav-item">
             <a {{action "showJson" index}} class="nav-link {{if item.showJson "active"}}" href="#">JSON</a>
