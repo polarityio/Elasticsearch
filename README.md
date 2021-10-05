@@ -25,6 +25,10 @@ Elasticsearch account username (Leave this blank if you are not using Basic Auth
 
 Elasticsearch account password (Leave this blank if you are not using Basic Auth via Shield)
 
+### API Key
+
+Elasticsearch API Key in Base64 format. Leave this blank if you are not using authentication or you are using Basic Auth via X-Pack (i.e., if you have a username and password).
+
 ### Index for Elasticsearch
 
 Comma delimited list of Elasticsearch indexes you want searched for results (no spaces between commas)

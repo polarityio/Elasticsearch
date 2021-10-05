@@ -89,7 +89,7 @@ module.exports = {
       key: 'apiKey',
       name: 'API Key',
       description:
-          'Elasticsearch API Key. Leave this blank if you are using Basic Auth via X-Pack (i.e., if you have a username and password) or have no authentication setup.',
+          'Elasticsearch API Key in Base64 format. Leave this blank if you are using Basic Auth via X-Pack (i.e., if you have a username and password) or have no authentication setup.',
       default: '',
       type: 'password',
       userCanEdit: true,
