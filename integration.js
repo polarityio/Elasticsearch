@@ -42,7 +42,35 @@ function startup(logger) {
     defaults.rejectUnauthorized = config.request.rejectUnauthorized;
   }
 
+  if(typeof config.request.secureProtocol === 'string' && config.request.secureProtocol.length > 0){
+    defaults.secureProtocol = config.request.secureProtocol;
+  }
+
   requestWithDefaults = request.defaults(defaults);
+}
+
+/**
+ * Returns the appropriate auth headers that should be added any requests
+ * @param options, user options for the integration
+ * @param headers, additional headers you want added to the returned header object
+ * @returns {{Authorization: string}|{}}
+ */
+function getAuthHeader(options, headers = {}) {
+  if (options.username && options.password) {
+    return {
+      ...headers,
+      Authorization: `Basic ${Buffer.from(`${options.username}:${options.password}`).toString('base64')}`
+    };
+  } else if (options.apiKey) {
+    return {
+      ...headers,
+      Authorization: `ApiKey ${options.apiKey}`
+    };
+  } else {
+    return {
+      ...headers
+    };
+  }
 }
 
 function doLookup(entities, options, cb) {
@@ -86,65 +114,72 @@ function doLookup(entities, options, cb) {
   });
 }
 
-function onDetails(lookupObject, options, cb) {
+function onMessage(payload, options, cb){
   if (options.highlightEnabled === false) {
-    return cb(null, lookupObject.data);
+    return cb(null, {});
   }
 
-  const documentIds = lookupObject.data.details.results.map((item) => {
-    return item.hit._id;
-  });
+  const highlights = {};
+
+  const { documentIds, entity } = payload;
 
   const requestOptions = {
     uri: `${options.url}/${options.index}/_search`,
     method: 'GET',
-    body: _buildOnDetailsQuery(lookupObject.entity, documentIds, options),
+    body: _buildOnDetailsQuery(entity, documentIds, options),
+    headers: getAuthHeader(options),
     json: true
   };
 
-  if (
-    typeof options.username === 'string' &&
-    options.username.length > 0 &&
-    typeof options.password === 'string' &&
-    options.password.length > 0
-  ) {
-    requestOptions.auth = {
-      user: options.username,
-      pass: options.password
-    };
-    // requestOptions.headers.Authorization =
-    //   'Basic ' + Buffer.from(`${options.username}:${options.password}`).toString('base64');
-  }
-
-  log.debug({ onDetailsQuery: requestOptions }, 'onDetails Request Payload');
-  lookupObject.data.details.highlights = {};
+  log.debug({ onMessageQuery: requestOptions }, 'onMessage Request Payload');
   requestWithDefaults(requestOptions, function(httpErr, response, body) {
     if (httpErr) {
-      return cb(httpErr);
+      return cb({
+        detail: 'Encountered an error loading highlights',
+        error: httpErr
+      });
     }
 
-    body.hits.hits.forEach((hit) => {
-      const resultHighlights = [];
-      if (hit.highlight) {
-        for (const [fieldName, fieldValues] of Object.entries(hit.highlight)) {
-          if (!fieldName.endsWith('.keyword')) {
-            resultHighlights.push({
-              fieldName,
-              fieldValues
-            });
+    if(body && body.hits && Array.isArray(body.hits.hits)){
+      body.hits.hits.forEach((hit) => {
+        const resultHighlights = [];
+        if (hit.highlight) {
+          for (const [fieldName, fieldValues] of Object.entries(hit.highlight)) {
+            if (!fieldName.endsWith('.keyword')) {
+              resultHighlights.push({
+                fieldName,
+                fieldValues
+              });
+            }
           }
         }
-      }
-      lookupObject.data.details.highlights[hit._id] = resultHighlights;
-    });
+        highlights[hit._id] = resultHighlights;
+      });
+    } else {
+      log.error({ body }, 'Error processing highlight results');
+      return cb({
+        detail: 'Error processing highlight results'
+      })
+    }
 
-    log.debug({ onDetails: lookupObject.data }, 'onDetails data result');
-    cb(null, lookupObject.data);
+    log.debug({ onDetails: highlights }, 'onMessage highlights data result');
+    cb(null, {
+      highlights
+    });
   });
 }
 
+/**
+ * Used to escape double quotes in entities and remove any newlines
+ * @param entityValue
+ * @returns {*}
+ */
+function escapeEntityValue(entityValue) {
+  return entityValue.replace(/(\r\n|\n|\r)/gm, '').replace(/"/g, '\\"');
+}
+
 function _buildOnDetailsQuery(entityObj, documentIds, options) {
-  const highlightQuery = options.highlightQuery.replace(entityTemplateReplacementRegex, entityObj.value);
+  const highlightQuery = options.highlightQuery.replace(entityTemplateReplacementRegex, escapeEntityValue(entityObj.value));
   return {
     _source: false,
     query: {
@@ -183,7 +218,7 @@ function _buildDoLookupQuery(entities, options) {
   const multiSearchQueries = [];
 
   entities.forEach((entityObj) => {
-    const query = options.query.replace(entityTemplateReplacementRegex, entityObj.value);
+    const query = options.query.replace(entityTemplateReplacementRegex, escapeEntityValue(entityObj.value));
     multiSearchString += `{}\n${query}\n`;
     multiSearchQueries.push(query);
   });
@@ -220,16 +255,11 @@ function _lookupEntityGroup(entityGroup, summaryFields, options, cb) {
   const requestOptions = {
     uri: `${options.url}/${options.index}/_msearch`,
     method: 'GET',
-    headers: {
+    headers: getAuthHeader(options, {
       'Content-Type': 'application/x-ndjson'
-    },
+    }),
     body: queryObject.multiSearchString
   };
-
-  if (options.username && options.password) {
-    requestOptions.headers.Authorization =
-      'Basic ' + Buffer.from(`${options.username}:${options.password}`).toString('base64');
-  }
 
   log.debug({ requestOptions: requestOptions }, 'lookupEntityGroup Request Payload');
 
@@ -390,8 +420,24 @@ function _handleRestErrors(response, body) {
           }
         );
       } else {
-        return null;
+        const hasQueryError = body.responses.find((response) => {
+          return typeof response.error !== 'undefined';
+        });
+        if(hasQueryError){
+          return _createJsonErrorPayload(
+              'Search query error encoutered.  Please check your Search Query syntax.',
+              null,
+              response.statusCode,
+              '7',
+              'There is an error with the search query.',
+              {
+                body: body
+              }
+          );
+        }
       }
+
+      return null;
       break;
   }
 
@@ -472,8 +518,9 @@ var _createJsonErrorObject = function(msg, pointer, httpCode, code, title, meta)
 };
 
 module.exports = {
-  startup: startup,
-  doLookup: doLookup,
-  validateOptions: validateOptions,
-  onDetails: onDetails
+  startup,
+  doLookup,
+  validateOptions,
+  onMessage
+  //onDetails: onDetails
 };

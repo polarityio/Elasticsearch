@@ -2,7 +2,10 @@
 
 polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
-  onDetailsLoaded() {
+  hadHighlightLoadingError: false,
+  loadingHighlights: false,
+  init() {
+    this._super(...arguments);
     const highlightEnabled = this.get('block.userOptions.highlightEnabled');
     this.get('details.results').forEach((result, index) => {
       if (highlightEnabled) {
@@ -18,6 +21,11 @@ polarity.export = PolarityComponent.extend({
         Ember.set(result, 'showSource', true);
       }
     });
+
+    if(!this.get('details.highlights')){
+      this.loadHighlights();
+    }
+
   },
   onDetailsError(err) {
     if (err) {
@@ -25,19 +33,19 @@ polarity.export = PolarityComponent.extend({
     }
   },
   actions: {
-    showHighlights: function(index) {
+    showHighlights: function (index) {
       this.set('details.results.' + index + '.showTable', false);
       this.set('details.results.' + index + '.showJson', false);
       this.set('details.results.' + index + '.showSource', false);
       this.set('details.results.' + index + '.showHighlights', true);
     },
-    showTable: function(index) {
+    showTable: function (index) {
       this.set('details.results.' + index + '.showTable', true);
       this.set('details.results.' + index + '.showJson', false);
       this.set('details.results.' + index + '.showSource', false);
       this.set('details.results.' + index + '.showHighlights', false);
     },
-    showJson: function(index) {
+    showJson: function (index) {
       if (typeof this.get('details.results.' + index + '.json') === 'undefined') {
         this.set(
           'details.results.' + index + '.json',
@@ -49,7 +57,7 @@ polarity.export = PolarityComponent.extend({
       this.set('details.results.' + index + '.showSource', false);
       this.set('details.results.' + index + '.showHighlights', false);
     },
-    showSource: function(index) {
+    showSource: function (index) {
       this._initSource(index);
       this.set('details.results.' + index + '.showTable', false);
       this.set('details.results.' + index + '.showJson', false);
@@ -72,13 +80,10 @@ polarity.export = PolarityComponent.extend({
     }
   },
   syntaxHighlight(json) {
-    json = json
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     return json.replace(
       /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-      function(match) {
+      function (match) {
         var cls = 'number';
         if (/^"/.test(match)) {
           if (/:$/.test(match)) {
@@ -94,5 +99,31 @@ polarity.export = PolarityComponent.extend({
         return '<span class="' + cls + '">' + match + '</span>';
       }
     );
+  },
+  loadHighlights: function () {
+    this.set('loadingHighlights', true);
+    const documentIds = this.get('details.results').map((item) => {
+      return item.hit._id;
+    });
+
+    const payload = {
+      documentIds,
+      entity: this.get('block.entity')
+    };
+
+    this.sendIntegrationMessage(payload)
+      .then((result) => {
+        this.set('details.highlights', result.highlights);
+        this.set('hadHighlightLoadingError', false);
+      })
+      .catch((err) => {
+        console.info(err);
+        this.set('block.errorMsg', err.meta && err.meta.detail ? err.meta.detail : 'Unexpected error encountered loading highlights.');
+        this.set('hadHighlightLoadingError', true);
+      })
+      .finally(() => {
+        this.set('loadingHighlights', false);
+
+      });
   }
 });

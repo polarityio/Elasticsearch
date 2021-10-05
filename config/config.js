@@ -41,7 +41,10 @@ module.exports = {
      * to servers without valid SSL certificates.  Please note that we do NOT recommending setting this
      * to false in a production environment.
      */
-    rejectUnauthorized: true
+    rejectUnauthorized: true,
+    // Some ES server may require that you force TLS1.2 to be used.  To do this, set the `secureProtocol`
+    // property to 'TLSv1_2_method'.
+    secureProtocol: ''
   },
   options: [
     {
@@ -77,6 +80,16 @@ module.exports = {
       key: 'password',
       name: 'Password',
       description: 'Elasticsearch account password (Leave this blank if you are not using Basic Auth via Shield)',
+      default: '',
+      type: 'password',
+      userCanEdit: true,
+      adminOnly: false
+    },
+    {
+      key: 'apiKey',
+      name: 'API Key',
+      description:
+          'Elasticsearch API Key in Base64 format. Leave this blank if you are using Basic Auth via X-Pack (i.e., if you have a username and password) or have no authentication setup.',
       default: '',
       type: 'password',
       userCanEdit: true,
