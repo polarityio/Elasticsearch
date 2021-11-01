@@ -1,7 +1,7 @@
-{{#if block.errorMsg}}
-    <div class="error-block p-red">
-        <div class="p-title p-red">{{fa-icon "exclamation-circle"}} Error Loading Details </div>
-        {{block.errorMsg}}
+{{#if block._state.errorMessage}}
+    <div class="alert alert-danger error-container">
+        <div class="error-title">{{fa-icon "exclamation-circle"}} Error Loading Data</div>
+        <div class="error-message">{{block._state.errorMessage}}</div>
     </div>
 {{/if}}
 
@@ -9,77 +9,110 @@
     <a class="p-link" href="{{block.userOptions.kibanaUrl}}">Open Kibana {{fa-icon "external-link" class="external-icon"}}</a>
 {{/if}}
 
-{{#each details.results as |item index|}}
-    {{#if (gt index 0)}}
-        <hr>
-    {{/if}}
-    <div class="title-block">
-        {{#if block.userOptions.documentTitleField}}
-            <span class="p-title">{{fa-icon "file-alt" fixedWidth=true}} {{get item.hit._source
-                                                                               block.userOptions.documentTitleField}}</span>
-        {{else}}
-            <span class="p-title">Document: {{item.hit._id}}</span>
-        {{/if}}
-    </div>
-
-    {{#if block.isLoadingDetails}}
-        <span class="p-footnote">Loading Highlights ...</span>
-    {{else}}
-    <ul class="nav nav-tabs">
-        {{#if block.userOptions.highlightEnabled}}
-            <li class="nav-item">
-                <a {{action "showHighlights" index}} class="nav-link {{if item.showHighlights "active"}}" href="#">Highlights</a>
-            </li>
-        {{/if}}
-        <li class="nav-item">
-            <a {{action "showTable" index}} class="nav-link {{if item.showTable "active"}}" href="#">Table</a>
-        </li>
-        <li class="nav-item">
-            <a {{action "showSource" index}} class="nav-link {{if item.showSource "active"}}" href="#">_source</a>
-        </li>
-        <li class="nav-item">
-            <a {{action "showJson" index}} class="nav-link {{if item.showJson "active"}}" href="#">JSON</a>
-        </li>
-    </ul>
-    {{/if}}
-
-    {{#if item.showHighlights}}
-        <div class="tab-container">
-            {{#if loadingHighlights}}
-                {{fa-icon icon="spinner-third" fixedWidth=true spin=true}} Loading Highlights ...
-            {{else if hadHighlightLoadingError}}
-                <span>Unable to load highlights</span>
+{{#if (or details.isConnectionReset details.maxRequestQueueLimitHit details.isGatewayTimeout details.isProtoError)}}
+    <div class="mt-1">
+        <button type="button" class="btn btn-polarity btn-sm retry-btn" {{action "retrySearch"}}>
+            {{#if block._state.searchRunning}}
+                {{fa-icon icon="spinner-third" fixedWidth=true spin=true}}
             {{else}}
-                {{#each (get details (concat "highlights." item.hit._id)) as |highlight|}}
-                    <div class="fields-block">
-                        <span class="field-key">{{highlight.fieldName}}</span>
-                        {{#each highlight.fieldValues as |fieldValue|}}
-                            <span class="field-value">{{{fieldValue}}}</span>
-                        {{/each}}
-                    </div>
-                {{/each}}
+                Retry Search
             {{/if}}
+        </button>
+        <div class="mt-1">
+            <span>A temporary Elasticsearch API search limit was reached.  You can retry your search by pressing the "Retry Search" button.</span>
+        </div>
+        <div class="mt-1">
+            {{#if details.isConnectionReset}}
+                <span class="p-footnote">Retry Code: ECONNRESET</span>
+            {{/if}}
+            {{#if details.isProtoError}}
+                <span class="p-footnote">Retry Code: EPROTO</span>
+            {{/if}}
+            {{#if details.isGatewayTimeout}}
+                <span class="p-footnote">Retry Code: 5xx</span>
+            {{/if}}
+            {{#if details.maxRequestQueueLimitHit}}
+                <span class="p-footnote">Retry Code: Bottleneck</span>
+            {{/if}}
+        </div>
+    </div>
+{{else}}
+    {{#if (eq details.results.length 0)}}
+        <div class="alert alert-info mt-2" role="alert">
+            No Search Results Found
         </div>
     {{/if}}
 
-    {{#if item.showSource}}
-    <div class="tab-container fields-block scrollable-block">
-        {{#each-in item.sourceStringified as |key value|}}
-            <span class="field-key">{{key}}:</span><span class="field-value">{{value}}</span>
-        {{/each-in}}
-    </div>
-    {{/if}}
+    {{#each details.results as |item index|}}
+        {{#if (gt index 0)}}
+            <hr>
+        {{/if}}
+        <div class="title-block">
+            {{#if block.userOptions.documentTitleField}}
+                <span class="p-title">{{fa-icon "file-alt" fixedWidth=true}} {{get item.hit._source
+                                                                                   block.userOptions.documentTitleField}}</span>
+            {{else}}
+                <span class="p-title">Document: {{item.hit._id}}</span>
+            {{/if}}
+        </div>
 
-    {{#if item.showTable}}
-    <div class="tab-container fields-table">
-        {{object-to-table item.hit._source}}
-    </div>
-    {{/if}}
+        <ul class="nav nav-tabs">
+            {{#if (get details (concat "highlights." item.hit._id))}}
+                {{#if block.userOptions.highlightEnabled}}
+                    <li class="nav-item">
+                        <a {{action "showHighlights" index}} class="nav-link {{if item.showHighlights "active"}}" href="#">Highlights</a>
+                    </li>
+                {{/if}}
+            {{/if}}
+            <li class="nav-item">
+                <a {{action "showTable" index}} class="nav-link {{if item.showTable "active"}}" href="#">Table</a>
+            </li>
+            <li class="nav-item">
+                <a {{action "showSource" index}} class="nav-link {{if item.showSource "active"}}" href="#">_source</a>
+            </li>
+            <li class="nav-item">
+                <a {{action "showJson" index}} class="nav-link {{if item.showJson "active"}}" href="#">JSON</a>
+            </li>
+        </ul>
 
-    {{#if item.showJson}}
-    <div class="tab-container json-block">
-        <pre>{{{item.json}}}</pre>
-    </div>
-    {{/if}}
+        {{#if item.showHighlights}}
+            <div class="tab-container">
+                {{#if block._state.highlightsLoading}}
+                    {{fa-icon icon="spinner-third" fixedWidth=true spin=true}} Loading Highlights ...
+                {{else if hadHighlightLoadingError}}
+                    <span>Unable to load highlights</span>
+                {{else}}
+                    {{#each (get details (concat "highlights." item.hit._id)) as |highlight|}}
+                        <div class="fields-block">
+                            <span class="field-key">{{highlight.fieldName}}</span>
+                            {{#each highlight.fieldValues as |fieldValue|}}
+                                <span class="field-value">{{{fieldValue}}}</span>
+                            {{/each}}
+                        </div>
+                    {{/each}}
+                {{/if}}
+            </div>
+        {{/if}}
 
-{{/each}}
+        {{#if item.showSource}}
+        <div class="tab-container fields-block scrollable-block">
+            {{#each-in item.sourceStringified as |key value|}}
+                <span class="field-key">{{key}}:</span><span class="field-value">{{value}}</span>
+            {{/each-in}}
+        </div>
+        {{/if}}
+
+        {{#if item.showTable}}
+        <div class="tab-container fields-table">
+            {{object-to-table item.hit._source}}
+        </div>
+        {{/if}}
+
+        {{#if item.showJson}}
+        <div class="tab-container json-block">
+            <pre>{{{item.json}}}</pre>
+        </div>
+        {{/if}}
+
+    {{/each}}
+{{/if}}

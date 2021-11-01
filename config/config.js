@@ -164,6 +164,26 @@ module.exports = {
       type: 'text',
       userCanEdit: true,
       adminOnly: false
+    },
+    {
+      key: 'maxConcurrent',
+      name: 'Max Concurrent Search Requests',
+      description:
+          'Maximum number of concurrent search requests (defaults to 10).  Integration must be restarted after changing this option.',
+      default: 10,
+      type: 'number',
+      userCanEdit: false,
+      adminOnly: true
+    },
+    {
+      key: 'minTime',
+      name: 'Minimum Time Between Searches',
+      description:
+          'Minimum amount of time in milliseconds between each entity search (defaults to 50).  Integration must be restarted after changing this option.',
+      default: 50,
+      type: 'number',
+      userCanEdit: false,
+      adminOnly: true
     }
   ]
 };

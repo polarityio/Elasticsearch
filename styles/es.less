@@ -12,8 +12,38 @@ pre {
   font-size: 9px;
 }
 
-div.error-block{
-  margin-bottom: 10px;
+.error-container {
+  margin-top: 10px;
+  overflow-x: scroll;
+
+  .error-message{
+    white-space: pre-wrap;
+  }
+
+  .error-title {
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+
+    i,
+    svg {
+      font-size: 8px;
+      margin-right: 3px;
+    }
+  }
+}
+
+.summary-tag-icon{
+  margin-bottom: 0.5px;
+  color: rgba(0,0,0,.4);
+}
+
+.retry-btn {
+  height: 25px;
+  padding: 5px;
+  width: 150px;
+  font-weight: 500;
 }
 
 span.highlight {

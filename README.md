@@ -17,6 +17,16 @@ URL for your Elasticsearch REST API including the schema and port if applicable 
 https://elastic.prod:9200
 ```
 
+### Kibana URL
+
+URL for your Elasticsearch Kibana interface including the schema and port if applicable (e.g., https://elastic.prod:9243/app/kibana).  If left blank no link to Kibana will be provided.
+
+> Note that this link is not yet able to link directly to a returned document id but only takes you to the Kibana web interface.
+
+```
+https://elastic.prod:9243/app/kibana
+```
+
 ### Username
 
 Elasticsearch account username (Leave this blank if you are not using Basic Auth via Shield)
@@ -41,7 +51,7 @@ kibana_sample_data_logs,kibana_sample_data_flights
 
 The search query to execute as JSON. The top level property should be a `query` object and must be a valid JSON search request when sent to the ES `_search` REST endpoint.  The search query can make use of the templated variable `{{entity}}` which will be replaced by the entity recognized on the user's screen.
 
-As an example, with the search query is defined as:
+As an example, with the search query defined as:
 
 ```
 {"query": { "simple_query_string": { "query": "\"{{entity}}\"" } }, "from": 0, "size": 10, "sort": [ {"timestamp": "desc" } ] } }
@@ -51,6 +61,12 @@ If the user has the IP 8.8.8.8 on their screen the integration will execute the 
 
 ```
 {"query": { "simple_query_string": { "query": "\"8.8.8.8\"" } }, "from": 0, "size": 10, "sort": [ {"timestamp": "desc" } ] } }
+```
+
+If you'd like to search certain fields you can use the `fields` property along with the `simple_query_string`.  For example, to only search the `ip` field you could use the following search:
+
+```
+{"query": { "simple_query_string": { "query": "\"{{entity}}\"", "fields": ["ip"]}}, "from": 0, "size": 10, "sort": [ {"timestamp": "desc" } ] } }
 ```
 
 ### Enable Highlighting
@@ -73,15 +89,13 @@ Comma delimited list of "_source" fields to include as part of the summary (no s
 
 "_source" field to use as the title for each returned document in the details template. This field must be returned by your search query.  Defaults to `timestamp`.
 
-### Kibana URL
+### Max Concurrent Search Requests
 
-URL for your Elasticsearch Kibana interface including the schema and port if applicable (e.g., https://elastic.prod:9243/app/kibana).  If left blank no link to Kibana will be provided.
+Maximum number of concurrent search requests (defaults to 10). Integration must be restarted after changing this option.
 
-> Note that this link is not yet able to link directly to a returned document id but only takes you to the Kibana web interface.
+### Minimum Time Between Searches
 
-```
-https://elastic.prod:9243/app/kibana
-```
+Minimum amount of time in milliseconds between each entity search (defaults to 50). Integration must be restarted after changing this option.
 
 ## Installation Instructions
 

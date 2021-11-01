@@ -1,4 +1,19 @@
-{{#if block.userOptions.includeFieldNameInSummary}}
+{{#if (or details.isConnectionReset details.maxRequestQueueLimitHit details.isGatewayTimeout details.isProtoError)}}
+    <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+        <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+        <span class="integration-text-color">
+            {{fa-icon icon="exclamation-circle" fixedWidth=true class="summary-tag-icon"}}
+            Search Limit Reached
+        </span>
+    </span>
+{{else if (eq details.results.length 0)}}
+    <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+        <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+        <span class="integration-text-color">
+            No results
+        </span>
+    </span>
+{{else if block.userOptions.includeFieldNameInSummary}}
     {{#each details.tags as |tag|}}
         <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
            <span class="acronym integration-text-bold-color">{{block.acronym}}</span>

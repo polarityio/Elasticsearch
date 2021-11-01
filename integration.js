@@ -2,16 +2,16 @@
 
 const request = require('request');
 const _ = require('lodash');
-const async = require('async');
+const Bottleneck = require('bottleneck');
 const fs = require('fs');
 const config = require('./config/config');
 
 const entityTemplateReplacementRegex = /{{entity}}/g;
 const MAX_ENTITIES_PER_LOOKUP = 10;
-const MAX_PARALLEL_LOOKUPS = 5;
 
 let log;
 let requestWithDefaults;
+let limiter = null;
 
 function startup(logger) {
   log = logger;
@@ -42,11 +42,20 @@ function startup(logger) {
     defaults.rejectUnauthorized = config.request.rejectUnauthorized;
   }
 
-  if(typeof config.request.secureProtocol === 'string' && config.request.secureProtocol.length > 0){
+  if (typeof config.request.secureProtocol === 'string' && config.request.secureProtocol.length > 0) {
     defaults.secureProtocol = config.request.secureProtocol;
   }
 
   requestWithDefaults = request.defaults(defaults);
+}
+
+function _setupLimiter(options) {
+  limiter = new Bottleneck({
+    maxConcurrent: Number.parseInt(options.maxConcurrent, 10),
+    highWater: 100, // no more than 100 lookups can be queued up
+    strategy: Bottleneck.strategy.OVERFLOW,
+    minTime: Number.parseInt(options.minTime, 10)
+  });
 }
 
 /**
@@ -74,10 +83,18 @@ function getAuthHeader(options, headers = {}) {
 }
 
 function doLookup(entities, options, cb) {
-  let self = this;
-  let lookupResults = [];
   const filteredEntities = [];
-  const lookupTasks = [];
+  let errors = [];
+  let errorCount = 0;
+  let lookupResults = [];
+  let numConnectionResets = 0;
+  let numThrottled = 0;
+  let numProtoErrors = 0;
+  let numApiKeyLimitedReached = 0;
+
+  if (limiter === null) {
+    _setupLimiter(options);
+  }
 
   entities.forEach((entityObj) => {
     if (entityObj.isIP) {
@@ -96,32 +113,103 @@ function doLookup(entities, options, cb) {
   const summaryFields = options.summaryFields.split(',');
   log.trace({ options }, 'options');
   const entityGroups = _.chunk(filteredEntities, MAX_ENTITIES_PER_LOOKUP);
+
+  if (entityGroups.length === 0) {
+    return cb(null, []);
+  }
+
   entityGroups.forEach((entityGroup) => {
-    lookupTasks.push(_lookupEntityGroup.bind(self, entityGroup, summaryFields, options));
-  });
+    limiter.submit(_lookupEntityGroup, entityGroup, summaryFields, options, (err, results) => {
+      const searchLimitObject = reachedSearchLimit(err, results);
 
-  async.parallelLimit(lookupTasks, MAX_PARALLEL_LOOKUPS, (err, results) => {
-    if (err) {
-      log.error(err, 'Error running lookup');
-      return cb(err);
-    }
+      if (searchLimitObject) {
+        // Tracking for logging purposes
+        if (searchLimitObject.isProtoError) numProtoErrors++;
+        if (searchLimitObject.isConnectionReset || searchLimitObject.isGatewayTimeout) numConnectionResets++;
+        if (searchLimitObject.maxRequestQueueLimitHit) numThrottled++;
+        if (searchLimitObject.apiKeyLimitReached) numApiKeyLimitedReached++;
 
-    results.forEach((result) => {
-      lookupResults = lookupResults.concat(result);
+        entityGroup.forEach((entity) => {
+          lookupResults.push({
+            entity,
+            isVolatile: true, // prevent limit reached results from being cached
+            data: {
+              summary: ['Search limit reached'],
+              details: {
+                ...searchLimitObject,
+                results: []
+              }
+            }
+          });
+        });
+      } else if (err) {
+        // a regular error occurred that is not a search limit related error
+        errors.push(err);
+        // this error is returned for all the entities in the entity group so we need to count that entire group
+        // as having errors
+        errorCount += entityGroup.length;
+      } else {
+        // no search limit error and no regular error so create a normal lookup object
+        results.forEach((result) => {
+          lookupResults = lookupResults.concat(result);
+        });
+      }
+
+      // Check if we got all our results back from the limiter
+      if (lookupResults.length + errorCount >= filteredEntities.length) {
+        if (numConnectionResets > 0 || numThrottled > 0 || numProtoErrors > 0) {
+          log.warn(
+            {
+              numEntitiesLookedUp: entities.length,
+              numConnectionResets: numConnectionResets,
+              numLookupsThrottled: numThrottled,
+              numProtoErrors,
+              numApiKeyLimitedReached
+            },
+            'Lookup Limit Reached'
+          );
+        }
+
+        if (errors.length > 0) {
+          log.error({ errors }, 'doLookup errors');
+          cb({
+            detail:
+              Array.isArray(errors) && errors.length > 0 && errors[0].detail
+                ? errors[0].detail
+                : 'Error running search',
+            errors
+          });
+        } else {
+          cb(null, lookupResults);
+        }
+      }
     });
-
-    cb(null, lookupResults);
   });
 }
 
-function onMessage(payload, options, cb){
-  if (options.highlightEnabled === false) {
-    return cb(null, {});
+function reachedSearchLimit(err, results) {
+  const maxRequestQueueLimitHit =
+    (_.isEmpty(err) && _.isEmpty(results)) || (err && err.message === 'This job has been dropped by Bottleneck');
+
+  let statusCode = Number.parseInt(_.get(err, 'errors.0.status', 0), 10);
+  const isGatewayTimeout = statusCode === 502 || statusCode === 504 || statusCode === 500;
+  const isConnectionReset = _.get(err, 'err.code', '') === 'ECONNRESET';
+  const isProtoError = _.get(err, 'err.code', '') === 'EPROTO';
+
+  if (maxRequestQueueLimitHit || isConnectionReset || isGatewayTimeout || isProtoError) {
+    return {
+      maxRequestQueueLimitHit,
+      isConnectionReset,
+      isGatewayTimeout,
+      isProtoError
+    };
   }
 
-  const highlights = {};
+  return null;
+}
 
-  const { documentIds, entity } = payload;
+function loadHighlights(entity, documentIds, options, cb) {
+  const highlights = {};
 
   const requestOptions = {
     uri: `${options.url}/${options.index}/_search`,
@@ -132,7 +220,7 @@ function onMessage(payload, options, cb){
   };
 
   log.debug({ onMessageQuery: requestOptions }, 'onMessage Request Payload');
-  requestWithDefaults(requestOptions, function(httpErr, response, body) {
+  requestWithDefaults(requestOptions, function (httpErr, response, body) {
     if (httpErr) {
       return cb({
         detail: 'Encountered an error loading highlights',
@@ -140,7 +228,7 @@ function onMessage(payload, options, cb){
       });
     }
 
-    if(body && body.hits && Array.isArray(body.hits.hits)){
+    if (body && body.hits && Array.isArray(body.hits.hits)) {
       body.hits.hits.forEach((hit) => {
         const resultHighlights = [];
         if (hit.highlight) {
@@ -159,7 +247,7 @@ function onMessage(payload, options, cb){
       log.error({ body }, 'Error processing highlight results');
       return cb({
         detail: 'Error processing highlight results'
-      })
+      });
     }
 
     log.debug({ onDetails: highlights }, 'onMessage highlights data result');
@@ -169,17 +257,76 @@ function onMessage(payload, options, cb){
   });
 }
 
+function onMessage(payload, options, cb) {
+  if (options.highlightEnabled === false) {
+    return cb(null, {});
+  }
+
+  switch (payload.action) {
+    case 'HIGHLIGHT':
+      loadHighlights(payload.entity, payload.documentIds, options, cb);
+      break;
+    case 'SEARCH':
+      doLookup([payload.entity], options, (searchErr, lookupResults) => {
+        if (searchErr) {
+          log.error({ searchErr }, 'Error running search');
+          return cb(searchErr);
+        }
+
+        const lookupResult = lookupResults[0];
+
+        // This was a miss so we return empty results which will then
+        // display a message to the user telling them there is no data
+        // for this particular search.
+        if (lookupResult.data === null) {
+          return cb(null, {
+            details: {
+              results: []
+            }
+          });
+        }
+
+        const documentIds = _.get(lookupResult, 'data.details.results', []).map((item) => {
+          return item.hit._id;
+        });
+
+        if (documentIds.length > 0) {
+          loadHighlights(payload.entity, documentIds, options, (highlightErr, highlightResult) => {
+            if (highlightErr) {
+              log.error({ highlightErr }, 'Error loading highlights');
+              return cb(highlightErr);
+            }
+            lookupResult.data.details.highlights = highlightResult.highlights;
+            cb(null, {
+              details: lookupResult.data.details
+            });
+          });
+        } else {
+          cb(null, {
+            details: lookupResult.data.details
+          });
+        }
+      });
+      break;
+  }
+}
+
 /**
  * Used to escape double quotes in entities and remove any newlines
  * @param entityValue
  * @returns {*}
  */
 function escapeEntityValue(entityValue) {
-  return entityValue.replace(/(\r\n|\n|\r)/gm, '').replace(/"/g, '\\"');
+  const escapedValue = entityValue.replace(/(\r\n|\n|\r)/gm, '').replace(/\\/, '\\\\').replace(/"/g, '\\"');
+  log.trace({entityValue, escapedValue}, 'Escaped Entity Value');
+  return escapedValue;
 }
 
 function _buildOnDetailsQuery(entityObj, documentIds, options) {
-  const highlightQuery = options.highlightQuery.replace(entityTemplateReplacementRegex, escapeEntityValue(entityObj.value));
+  const highlightQuery = options.highlightQuery.replace(
+    entityTemplateReplacementRegex,
+    escapeEntityValue(entityObj.value)
+  );
   return {
     _source: false,
     query: {
@@ -263,7 +410,7 @@ function _lookupEntityGroup(entityGroup, summaryFields, options, cb) {
 
   log.debug({ requestOptions: requestOptions }, 'lookupEntityGroup Request Payload');
 
-  requestWithDefaults(requestOptions, function(httpErr, response, body) {
+  requestWithDefaults(requestOptions, function (httpErr, response, body) {
     if (httpErr) {
       return cb({
         err: httpErr,
@@ -274,7 +421,7 @@ function _lookupEntityGroup(entityGroup, summaryFields, options, cb) {
     const jsonBody = _parseBody(body);
     if (jsonBody === null) {
       return cb(
-        _createJsonErrorPayload('JSON Parse Error of HTTP Response', null, '404', '1', 'JSON Parse Error', {
+        _createJsonErrorObject('JSON Parse Error of HTTP Response', null, '404', '1', 'JSON Parse Error', {
           body: body
         })
       );
@@ -358,34 +505,27 @@ function _isMiss(responseObject) {
 function _handleRestErrors(response, body) {
   switch (response.statusCode) {
     case 403:
-      return _createJsonErrorPayload('Access to the resource is forbidden', null, '404', '1', 'Forbidden', {
+      return _createJsonErrorObject('Access to the resource is forbidden', null, '404', '1', 'Forbidden', {
         body: body
       });
       break;
     case 404:
-      return _createJsonErrorPayload('Not Found', null, '404', '1', 'Not Found', {
+      return _createJsonErrorObject('Not Found', null, '404', '1', 'Not Found', {
         body: body
       });
       break;
     case 400:
-      return _createJsonErrorPayload(
-        'Invalid Search, please check search parameters',
-        null,
-        '400',
-        '2',
-        'Bad Request',
-        {
-          body: body
-        }
-      );
+      return _createJsonErrorObject('Invalid Search, please check search parameters', null, '400', '2', 'Bad Request', {
+        body: body
+      });
       break;
     case 409:
-      return _createJsonErrorPayload('There was a conflict with your search', null, '409', '3', 'Conflict', {
+      return _createJsonErrorObject('There was a conflict with your search', null, '409', '3', 'Conflict', {
         body: body
       });
       break;
     case 503:
-      return _createJsonErrorPayload(
+      return _createJsonErrorObject(
         'Service is currently unavailable for search results',
         null,
         '503',
@@ -396,7 +536,7 @@ function _handleRestErrors(response, body) {
         }
       );
     case 500:
-      return _createJsonErrorPayload(
+      return _createJsonErrorObject(
         'Internal Server error, please check your instance',
         null,
         '500',
@@ -409,7 +549,7 @@ function _handleRestErrors(response, body) {
       break;
     case 200:
       if (!Array.isArray(body.responses)) {
-        return _createJsonErrorPayload(
+        return _createJsonErrorObject(
           'Unexpected Response Payload Format.  "body.responses" should be an array',
           null,
           response.statusCode,
@@ -423,16 +563,16 @@ function _handleRestErrors(response, body) {
         const hasQueryError = body.responses.find((response) => {
           return typeof response.error !== 'undefined';
         });
-        if(hasQueryError){
-          return _createJsonErrorPayload(
-              'Search query error encoutered.  Please check your Search Query syntax.',
-              null,
-              response.statusCode,
-              '7',
-              'There is an error with the search query.',
-              {
-                body: body
-              }
+        if (hasQueryError) {
+          return _createJsonErrorObject(
+            'Search query error encoutered.  Please check your Search Query syntax.',
+            null,
+            response.statusCode,
+            '7',
+            'There is an error with the search query.',
+            {
+              body: body
+            }
           );
         }
       }
@@ -441,8 +581,8 @@ function _handleRestErrors(response, body) {
       break;
   }
 
-  return _createJsonErrorPayload(
-    'Unexpected HTTP Response Status Code',
+  return _createJsonErrorObject(
+    `Unexpected HTTP Response Status Code: ${response.statusCode}`,
     null,
     response.statusCode,
     '7',
@@ -488,15 +628,8 @@ function validateOptions(userOptions, cb) {
   cb(null, errors);
 }
 
-// function that takes the ErrorObject and passes the error message to the notification window
-var _createJsonErrorPayload = function(msg, pointer, httpCode, code, title, meta) {
-  return {
-    errors: [_createJsonErrorObject(msg, pointer, httpCode, code, title, meta)]
-  };
-};
-
 // function that creates the Json object to be passed to the payload
-var _createJsonErrorObject = function(msg, pointer, httpCode, code, title, meta) {
+function _createJsonErrorObject(msg, pointer, httpCode, code, title, meta) {
   let error = {
     detail: msg,
     status: httpCode.toString(),
@@ -515,12 +648,11 @@ var _createJsonErrorObject = function(msg, pointer, httpCode, code, title, meta)
   }
 
   return error;
-};
+}
 
 module.exports = {
   startup,
   doLookup,
   validateOptions,
   onMessage
-  //onDetails: onDetails
 };
