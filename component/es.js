@@ -113,6 +113,7 @@ polarity.export = PolarityComponent.extend({
       .then((result) => {
         this.set('details.highlights', result.highlights);
         this.set('hadHighlightLoadingError', false);
+        this.initHighlights();
       })
       .catch((err) => {
         console.info(err);
