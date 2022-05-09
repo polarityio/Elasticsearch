@@ -184,6 +184,16 @@ module.exports = {
       type: 'number',
       userCanEdit: false,
       adminOnly: true
+    },
+    {
+      key: 'searchPrivateIps',
+      name: 'Search Private IPs',
+      description:
+          'If checked, the integration will search private IPs.',
+      default: true,
+      type: 'boolean',
+      userCanEdit: false,
+      adminOnly: true
     }
   ]
 };

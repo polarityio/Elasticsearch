@@ -98,7 +98,7 @@ function doLookup(entities, options, cb) {
 
   entities.forEach((entityObj) => {
     if (entityObj.isIP) {
-      if (!entityObj.isPrivateIP) {
+      if (!entityObj.isPrivateIP || options.searchPrivateIps) {
         filteredEntities.push(entityObj);
       }
     } else {
@@ -317,8 +317,11 @@ function onMessage(payload, options, cb) {
  * @returns {*}
  */
 function escapeEntityValue(entityValue) {
-  const escapedValue = entityValue.replace(/(\r\n|\n|\r)/gm, '').replace(/\\/, '\\\\').replace(/"/g, '\\"');
-  log.trace({entityValue, escapedValue}, 'Escaped Entity Value');
+  const escapedValue = entityValue
+    .replace(/(\r\n|\n|\r)/gm, '')
+    .replace(/\\/, '\\\\')
+    .replace(/"/g, '\\"');
+  log.trace({ entityValue, escapedValue }, 'Escaped Entity Value');
   return escapedValue;
 }
 
