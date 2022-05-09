@@ -140,7 +140,7 @@ module.exports = {
       key: 'summaryFields',
       name: 'Summary Fields',
       description:
-        'Comma delimited list of "_source" fields to include as part of the summary (no spaces between commas).  These fields must be returned by your search query.',
+        'Comma delimited list of "_source" fields to include as part of the summary (no spaces between commas).  These fields must be returned by your search query.  If no fields are set or available a result count will be shown.',
       default: 'index',
       type: 'text',
       userCanEdit: true,
