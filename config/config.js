@@ -121,7 +121,7 @@ module.exports = {
       name: 'Enable Highlighting',
       description:
         'If checked, the integration will display highlighted search terms via the Elasticsearch Highlighter.',
-      default: true,
+      default: false,
       type: 'boolean',
       userCanEdit: true,
       adminOnly: false
