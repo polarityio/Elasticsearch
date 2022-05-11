@@ -2,7 +2,7 @@
   "main": "./integration.js",
   "name": "Elasticsearch",
   "description": "Search your data in real-time",
-  "version": "3.4.0-beta",
+  "version": "3.5.0",
   "private": true,
   "dependencies": {
     "request": "^2.88.2",
