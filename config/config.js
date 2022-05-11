@@ -51,7 +51,7 @@ module.exports = {
       key: 'url',
       name: 'Elasticsearch URL',
       description:
-        'URL for your Elasticsearch REST API including the schema and port if applicable (e.g., ttps://elastic.prod:9200)',
+        'URL for your Elasticsearch REST API including the schema and port if applicable (e.g., https://elastic.prod:9200)',
       default: '',
       type: 'text',
       userCanEdit: false,
