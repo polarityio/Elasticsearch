@@ -406,7 +406,6 @@ function _getDetailBlockValues(hitResult) {
     }
   });
 
-  log.info({ values }, 'Detail fields');
   return values;
 }
 
@@ -432,8 +431,7 @@ function _getSummaryTags(searchItemResult) {
       }
     });
   });
-
-  log.info({ tags }, 'Summary Tags');
+  
   return tags;
 }
 
