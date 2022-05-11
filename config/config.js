@@ -54,8 +54,8 @@ module.exports = {
         'URL for your Elasticsearch REST API including the schema and port if applicable (e.g., ttps://elastic.prod:9200)',
       default: '',
       type: 'text',
-      userCanEdit: true,
-      adminOnly: false
+      userCanEdit: false,
+      adminOnly: true
     },
     {
       key: 'kibanaUrl',
@@ -64,8 +64,8 @@ module.exports = {
         'URL for your Elasticsearch Kibana interface including the schema and port if applicable (e.g., https://elastic.prod:9243/app/kibana).  If left blank no link to Kibana will be shown.',
       default: '',
       type: 'text',
-      userCanEdit: true,
-      adminOnly: false
+      userCanEdit: false,
+      adminOnly: true
     },
     {
       key: 'username',
@@ -73,8 +73,8 @@ module.exports = {
       description: 'Elasticsearch account username (Leave this blank if you are not using Basic Auth via Shield)',
       default: '',
       type: 'text',
-      userCanEdit: true,
-      adminOnly: false
+      userCanEdit: false,
+      adminOnly: true
     },
     {
       key: 'password',
@@ -82,8 +82,8 @@ module.exports = {
       description: 'Elasticsearch account password (Leave this blank if you are not using Basic Auth via Shield)',
       default: '',
       type: 'password',
-      userCanEdit: true,
-      adminOnly: false
+      userCanEdit: false,
+      adminOnly: true
     },
     {
       key: 'apiKey',
@@ -92,8 +92,8 @@ module.exports = {
         'Elasticsearch API Key in Base64 format. Leave this blank if you are using Basic Auth via X-Pack (i.e., if you have a username and password) or have no authentication setup.',
       default: '',
       type: 'password',
-      userCanEdit: true,
-      adminOnly: false
+      userCanEdit: false,
+      adminOnly: true
     },
     {
       key: 'index',
@@ -102,8 +102,8 @@ module.exports = {
         'Comma delimited list of Elasticsearch indexes you want searched for results (no spaces between commas)',
       default: '',
       type: 'text',
-      userCanEdit: true,
-      adminOnly: false
+      userCanEdit: false,
+      adminOnly: true
     },
     {
       key: 'query',
@@ -113,8 +113,8 @@ module.exports = {
       default:
         '{"query": { "simple_query_string": { "query": "\\"{{entity}}\\"" } }, "from": 0, "size": 10, "sort": [ {"timestamp": "desc" } ] } }',
       type: 'text',
-      userCanEdit: true,
-      adminOnly: false
+      userCanEdit: false,
+      adminOnly: true
     },
     {
       key: 'highlightEnabled',
@@ -123,8 +123,8 @@ module.exports = {
         'If checked, the integration will display highlighted search terms via the Elasticsearch Highlighter.',
       default: false,
       type: 'boolean',
-      userCanEdit: true,
-      adminOnly: false
+      userCanEdit: false,
+      adminOnly: true
     },
     {
       key: 'highlightQuery',
@@ -133,8 +133,8 @@ module.exports = {
         'The highlighter query to execute when a user clicks to view additional details. The top level property should be a `query` object. This query should typically match the query portion of your `Search Query`.  Highlighting will attempt to highlight against all fields and will return the first 10 results.  Only runs if the `Enable Highlighting` option is checked',
       default: '{"query": { "simple_query_string": { "query": "\\"{{entity}}\\"" } } }',
       type: 'text',
-      userCanEdit: true,
-      adminOnly: false
+      userCanEdit: false,
+      adminOnly: true
     },
     {
       key: 'summaryFields',
@@ -143,8 +143,8 @@ module.exports = {
           'Comma delimited list of field names to include as part of the summary tags.  JSON dot notation can be used to target nested attributes including fields inside the `_source` attribute. Fields must be returned by your search query to be displayed.  You can change the label for your fields by prepending the label to the field path and separating it with a colon (i.e., "<label>:<json path>").  If left blank, a result count will be shown. This option should be set to "Only Admins can View and Edit".',
       default: '',
       type: 'text',
-      userCanEdit: true,
-      adminOnly: false
+      userCanEdit: false,
+      adminOnly: true
     },
     {
       key: 'detailFields',
@@ -153,8 +153,8 @@ module.exports = {
           'Comma delimited list of field names to include as part of the details block.  JSON dot notation can be used to target nested attributes including fields inside the `_source` attribute. Fields must be returned by your search query to be displayed.  You can change the label for your fields by prepending the label to the field path and separating it with a colon (i.e., "<label>:<json path>").  If left blank, all fields will be shown. This option should be set to "Only Admins can View and Edit".',
       default: '',
       type: 'text',
-      userCanEdit: true,
-      adminOnly: false
+      userCanEdit: false,
+      adminOnly: true
     },
     {
       key: 'documentTitleField',
@@ -163,8 +163,8 @@ module.exports = {
         '"_source" field to use as the title for each returned document in the details template.  This field must be returned by your search query.',
       default: '',
       type: 'text',
-      userCanEdit: true,
-      adminOnly: false
+      userCanEdit: false,
+      adminOnly: true
     },
     {
       key: 'maxConcurrent',
