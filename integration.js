@@ -1,6 +1,6 @@
 'use strict';
 
-const request = require('request');
+const request = require('postman-request');
 const _ = require('lodash');
 const Bottleneck = require('bottleneck');
 const fs = require('fs');
@@ -431,7 +431,7 @@ function _getSummaryTags(searchItemResult) {
       }
     });
   });
-  
+
   return tags;
 }
 
