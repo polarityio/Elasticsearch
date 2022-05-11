@@ -2,8 +2,8 @@
 
 Polarity's Elasticsearch integration can search your ES instance using a user provided search and return results via the Polarity Overlay Window or HUD.  Similar to Kibana, the integration will return highlighted document fields as well as the full `_source` field.  In addition, a table and JSON view are also provided. .
 
-| ![](assets/details.png) |![](/assets/table.png)|![](assets/highlights.png)
-|---|---|--|
+| ![](assets/details.png) |![](assets/table.png)|![](assets/highlights.png)|
+|---|---|---|
 |*Customized Details View* |*Table view of data*| *Optional Highlights Enabled*|
 
 > Note that by default the ES integration will receive ALL entity types.  It is important that you select the "Manage Integration Data" option and turn off entity types you do not want sent to your ES integration.
