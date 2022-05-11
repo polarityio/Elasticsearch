@@ -12,6 +12,10 @@ const MAX_ENTITIES_PER_LOOKUP = 10;
 let log;
 let requestWithDefaults;
 let limiter = null;
+let summaryFieldsCompiled = null;
+let detailFieldsCompiled = null;
+let previousSummaryFields = null;
+let previousDetailFields = null;
 
 function startup(logger) {
   log = logger;
@@ -94,6 +98,20 @@ function doLookup(entities, options, cb) {
 
   if (limiter === null) {
     _setupLimiter(options);
+  }
+
+  try {
+    if (previousDetailFields === null || previousDetailFields !== options.detailFields) {
+      detailFieldsCompiled = _compileFieldsOption(options.detailFields);
+    }
+
+    if (previousSummaryFields === null || previousSummaryFields !== options.summaryFields) {
+      summaryFieldsCompiled = _compileFieldsOption(options.summaryFields, false);
+    }
+  } catch (compileError) {
+    return cb({
+      detail: compileError.message
+    });
   }
 
   entities.forEach((entityObj) => {
@@ -258,13 +276,13 @@ function loadHighlights(entity, documentIds, options, cb) {
 }
 
 function onMessage(payload, options, cb) {
-  if (options.highlightEnabled === false) {
-    return cb(null, {});
-  }
-
   switch (payload.action) {
     case 'HIGHLIGHT':
-      loadHighlights(payload.entity, payload.documentIds, options, cb);
+      if (options.highlightEnabled) {
+        loadHighlights(payload.entity, payload.documentIds, options, cb);
+      } else {
+        cb(null, {});
+      }
       break;
     case 'SEARCH':
       doLookup([payload.entity], options, (searchErr, lookupResults) => {
@@ -375,29 +393,87 @@ function _buildDoLookupQuery(entities, options) {
   return { multiSearchString, multiSearchQueries };
 }
 
-function _getSummaryTags(searchItemResult, summaryFields) {
-  const tags = new Map();
+function _getDetailBlockValues(hitResult) {
+  let values = [];
 
-  searchItemResult.hits.hits.forEach((hit) => {
-    if (!hit._source) {
-      tags.set('Missing _source field', {
-        field: '',
-        value: 'Missing _source field'
-      });
-    } else {
-      summaryFields.forEach((field) => {
-        const summaryField = _.get(hit._source, field);
-        if (summaryField) {
-          tags.set(`${field}${summaryField}`, {
-            field: field,
-            value: summaryField
-          });
-        }
+  detailFieldsCompiled.forEach((rule) => {
+    let value = _.get(hitResult, rule.path, null);
+    if (value !== null) {
+      values.push({
+        label: rule.label,
+        value
       });
     }
   });
 
-  return Array.from(tags.values());
+  log.info({ values }, 'Detail fields');
+  return values;
+}
+
+function _getSummaryTags(searchItemResult) {
+  let tags = [];
+  let uniqueValues = new Set();
+
+  searchItemResult.hits.hits.forEach((result) => {
+    summaryFieldsCompiled.forEach((rule) => {
+      let value = _.get(result, rule.path, null);
+      let alreadyExists = uniqueValues.has(value);
+
+      if (!alreadyExists) {
+        if (value !== null) {
+          if (rule.label.length > 0) {
+            tags.push(`${rule.label}: ${value}`);
+          } else {
+            tags.push(value);
+          }
+
+          uniqueValues.add(value);
+        }
+      }
+    });
+  });
+
+  log.info({ tags }, 'Summary Tags');
+  return tags;
+}
+
+function CompileException(message) {
+  this.message = message;
+}
+
+function _compileFieldsOption(fields, useDefaultLabels = true) {
+  const compiledFields = [];
+
+  fields.split(',').forEach((field) => {
+    let tokens = field.split(':');
+    let label;
+    let fieldPath;
+
+    if (tokens.length !== 1 && tokens.length !== 2) {
+      throw new CompileException(`Invalid field "${field}".  Field should be of the format "<label>:<json path>"`);
+    }
+
+    if (useDefaultLabels) {
+      label = tokens[0].trim();
+    } else {
+      label = '';
+    }
+
+    if (tokens.length === 1) {
+      // no label
+      fieldPath = tokens[0].trim();
+    } else if (tokens.length === 2) {
+      // label
+      fieldPath = tokens[1].trim();
+    }
+
+    compiledFields.push({
+      label,
+      path: fieldPath
+    });
+  });
+
+  return compiledFields;
 }
 
 function _lookupEntityGroup(entityGroup, summaryFields, options, cb) {
@@ -448,7 +524,9 @@ function _lookupEntityGroup(entityGroup, summaryFields, options, cb) {
         // various states without mutating the raw hit result returned from ES.  The raw hit result is stored in `hit`
         const hits = searchItemResult.hits.hits.map((hit) => {
           return {
-            hit: hit
+            hit: hit,
+            // details contains key-value pairs to be displayed in the details block
+            details: _getDetailBlockValues(hit, options)
           };
         });
         entityGroupResults.push({
@@ -457,7 +535,7 @@ function _lookupEntityGroup(entityGroup, summaryFields, options, cb) {
             summary: [],
             details: {
               results: hits,
-              tags: _getSummaryTags(searchItemResult, summaryFields),
+              tags: _getSummaryTags(searchItemResult),
               queries: queryObject.multiSearchQueries
             }
           }

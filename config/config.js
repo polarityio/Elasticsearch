@@ -89,7 +89,7 @@ module.exports = {
       key: 'apiKey',
       name: 'API Key',
       description:
-          'Elasticsearch API Key in Base64 format. Leave this blank if you are using Basic Auth via X-Pack (i.e., if you have a username and password) or have no authentication setup.',
+        'Elasticsearch API Key in Base64 format. Leave this blank if you are using Basic Auth via X-Pack (i.e., if you have a username and password) or have no authentication setup.',
       default: '',
       type: 'password',
       userCanEdit: true,
@@ -120,7 +120,7 @@ module.exports = {
       key: 'highlightEnabled',
       name: 'Enable Highlighting',
       description:
-        'If checked, the integration will display highlighted search terms via the Elasticsearch Highlighter',
+        'If checked, the integration will display highlighted search terms via the Elasticsearch Highlighter.',
       default: true,
       type: 'boolean',
       userCanEdit: true,
@@ -140,18 +140,19 @@ module.exports = {
       key: 'summaryFields',
       name: 'Summary Fields',
       description:
-        'Comma delimited list of "_source" fields to include as part of the summary (no spaces between commas).  These fields must be returned by your search query.  If no fields are set or available a result count will be shown.',
-      default: 'index',
+          'Comma delimited list of field names to include as part of the summary tags.  JSON dot notation can be used to target nested attributes including fields inside the `_source` attribute. Fields must be returned by your search query to be displayed.  You can change the label for your fields by prepending the label to the field path and separating it with a colon (i.e., "<label>:<json path>").  If left blank, a result count will be shown. This option should be set to "Only Admins can View and Edit".',
+      default: '',
       type: 'text',
       userCanEdit: true,
       adminOnly: false
     },
     {
-      key: 'includeFieldNameInSummary',
-      name: 'Include Field Name in Summary',
-      description: 'If checked, field names will be included as part of the summary fields.',
-      default: true,
-      type: 'boolean',
+      key: 'detailFields',
+      name: 'Details Fields',
+      description:
+          'Comma delimited list of field names to include as part of the details block.  JSON dot notation can be used to target nested attributes including fields inside the `_source` attribute. Fields must be returned by your search query to be displayed.  You can change the label for your fields by prepending the label to the field path and separating it with a colon (i.e., "<label>:<json path>").  If left blank, all fields will be shown. This option should be set to "Only Admins can View and Edit".',
+      default: '',
+      type: 'text',
       userCanEdit: true,
       adminOnly: false
     },
@@ -169,7 +170,7 @@ module.exports = {
       key: 'maxConcurrent',
       name: 'Max Concurrent Search Requests',
       description:
-          'Maximum number of concurrent search requests (defaults to 10).  Integration must be restarted after changing this option.',
+        'Maximum number of concurrent search requests (defaults to 10).  Integration must be restarted after changing this option.',
       default: 10,
       type: 'number',
       userCanEdit: false,
@@ -179,7 +180,7 @@ module.exports = {
       key: 'minTime',
       name: 'Minimum Time Between Searches',
       description:
-          'Minimum amount of time in milliseconds between each entity search (defaults to 50).  Integration must be restarted after changing this option.',
+        'Minimum amount of time in milliseconds between each entity search (defaults to 50).  Integration must be restarted after changing this option.',
       default: 50,
       type: 'number',
       userCanEdit: false,
@@ -188,8 +189,7 @@ module.exports = {
     {
       key: 'searchPrivateIps',
       name: 'Search Private IPs',
-      description:
-          'If checked, the integration will search private IPs.',
+      description: 'If checked, the integration will search private IPs.',
       default: true,
       type: 'boolean',
       userCanEdit: false,

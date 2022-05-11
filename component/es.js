@@ -4,11 +4,13 @@ polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
   hadHighlightLoadingError: false,
   loadingHighlights: false,
-  isSearchLimitReached: Ember.computed('block.data.details', function(){
-    return this.get('details.isConnectionReset') ||
-        this.get('details.maxRequestQueueLimitHit') ||
-        this.get('details.isGatewayTimeout') ||
-        this.get('details.isProtoError')
+  isSearchLimitReached: Ember.computed('block.data.details', function () {
+    return (
+      this.get('details.isConnectionReset') ||
+      this.get('details.maxRequestQueueLimitHit') ||
+      this.get('details.isGatewayTimeout') ||
+      this.get('details.isProtoError')
+    );
   }),
   init() {
     this._super(...arguments);
@@ -21,7 +23,10 @@ polarity.export = PolarityComponent.extend({
       this.set('block._state.highlightsLoading', false);
     }
 
-    if (!this.get('details.highlights') && !this.get('isSearchLimitReached')) {
+    if (
+      !this.get('details.highlights') &&
+      !this.get('isSearchLimitReached')
+    ) {
       this.loadHighlights();
     }
   },
@@ -59,6 +64,9 @@ polarity.export = PolarityComponent.extend({
       this.set('details.results.' + index + '.showJson', false);
       this.set('details.results.' + index + '.showSource', true);
       this.set('details.results.' + index + '.showHighlights', false);
+    },
+    toggleTabs: function (index) {
+      this.toggleProperty('details.results.' + index + '.showTabs', false);
     }
   },
   _initSource(index) {
@@ -125,6 +133,7 @@ polarity.export = PolarityComponent.extend({
       })
       .finally(() => {
         this.set('block._state.highlightsLoading', false);
+        this.get('block').notifyPropertyChange('data');
       });
   },
   runSearch() {
@@ -164,22 +173,13 @@ polarity.export = PolarityComponent.extend({
   isTimeoutError(error) {
     return error.status === '504';
   },
-  initHighlights(){
-    const highlightEnabled = this.get('block.userOptions.highlightEnabled');
+  initHighlights() {
     this.get('details.results').forEach((result, index) => {
-      const highlight = this.get(`details.highlights.${result.hit._id}`);
-      if (highlightEnabled && highlight) {
-        Ember.set(result, 'showHighlights', true);
-        Ember.set(result, 'showTable', false);
-        Ember.set(result, 'showJson', false);
-        Ember.set(result, 'showSource', false);
-      } else {
         this._initSource(index);
         Ember.set(result, 'showHighlights', false);
         Ember.set(result, 'showTable', true);
         Ember.set(result, 'showJson', false);
         Ember.set(result, 'showSource', false);
-      }
     });
   }
 });
