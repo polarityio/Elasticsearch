@@ -448,21 +448,19 @@ function _compileFieldsOption(fields, useDefaultLabels = true) {
     let fieldPath;
 
     if (tokens.length !== 1 && tokens.length !== 2) {
-      throw new CompileException(`Invalid field "${field}".  Field should be of the format "<label>:<json path>"`);
-    }
-
-    if (useDefaultLabels) {
-      label = tokens[0].trim();
-    } else {
-      label = '';
+      throw new CompileException(
+        `Invalid field "${field}".  Field should be of the format "<label>:<json path>" or "<json path>"`
+      );
     }
 
     if (tokens.length === 1) {
       // no label
       fieldPath = tokens[0].trim();
+      label = useDefaultLabels ? tokens[0].trim() : '';
     } else if (tokens.length === 2) {
-      // label
+      // label specified
       fieldPath = tokens[1].trim();
+      label = tokens[0].trim();
     }
 
     compiledFields.push({
