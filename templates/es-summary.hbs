@@ -13,18 +13,18 @@
             No results
         </span>
     </span>
-{{else if block.userOptions.includeFieldNameInSummary}}
-    {{#each details.tags as |tag|}}
-        <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
-           <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
-           <span class="integration-text-color">{{tag.field}}: {{tag.value}}</span>
-        </span>
-    {{/each}}
 {{else}}
     {{#each details.tags as |tag|}}
         <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
            <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
-           <span class="integration-text-color">{{tag.value}}</span>
+           <span class="integration-text-color">{{tag}}</span>
         </span>
     {{/each}}
+{{/if}}
+
+{{#if (eq details.tags.length 0)}}
+  <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+       <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+       <span class="integration-text-color">{{details.results.length}} results</span>
+    </span>
 {{/if}}

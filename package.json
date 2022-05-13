@@ -2,10 +2,10 @@
   "main": "./integration.js",
   "name": "Elasticsearch",
   "description": "Search your data in real-time",
-  "version": "3.4.0-beta",
+  "version": "3.5.0",
   "private": true,
   "dependencies": {
-    "request": "^2.88.2",
+    "postman-request": "^2.88.1-postman.31",
     "lodash": "^4.17.21",
     "bottleneck": "^2.19.5"
   },

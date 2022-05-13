@@ -2,7 +2,9 @@
 
 Polarity's Elasticsearch integration can search your ES instance using a user provided search and return results via the Polarity Overlay Window or HUD.  Similar to Kibana, the integration will return highlighted document fields as well as the full `_source` field.  In addition, a table and JSON view are also provided. .
 
-![53fb5dff-e139-4c47-a1d8-481f8b927df7](https://user-images.githubusercontent.com/306319/51043062-c28a6d00-158b-11e9-810d-4ae13c714841.GIF)
+| ![](assets/details.png) |![](assets/table.png)|![](assets/highlights.png)|
+|---|---|---|
+|*Customized Details View* |*Table view of data*| *Optional Highlights Enabled*|
 
 > Note that by default the ES integration will receive ALL entity types.  It is important that you select the "Manage Integration Data" option and turn off entity types you do not want sent to your ES integration.
 
@@ -69,6 +71,12 @@ If you'd like to search certain fields you can use the `fields` property along w
 {"query": { "simple_query_string": { "query": "\"{{entity}}\"", "fields": ["ip"]}}, "from": 0, "size": 10, "sort": [ {"timestamp": "desc" } ] } }
 ```
 
+If you'd like to search a specific time range you can do that using normal Elasticsearch JSON search syntax.  For example, do search data from the last 365 days you can use the following query assuming your timestamp field is called `timestamp`.  
+
+```
+{"query": { "bool": { "must": [ { "range": {"timestamp": {"gte": "now-365d/d","lt": "now/d"}}},{"query_string": {"query":"\"{{entity}}\""}}]}},"from": 0,"size": 10}
+```
+
 ### Enable Highlighting
 
 If checked, the integration will display highlighted search terms via the Elasticsearch Highlighter.  For more information on the Elasticsearch Highlighter please see the following documentation: https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-highlighting.html
@@ -83,7 +91,29 @@ The highlighter query to execute when a user clicks to view additional details. 
 
 ### Summary Fields
 
-Comma delimited list of "_source" fields to include as part of the summary (no spaces between commas). These fields must be returned by your search query.  Defaults to `index`.
+Comma delimited list of field names to include as part of the summary tags. JSON dot notation can be used to target nested attributes including fields inside the `_source` attribute. Fields must be returned by your search query to be displayed. You can change the label for your fields by prepending the label to the field path and separating it with a colon (i.e., "<label>:<json path>"). If left blank, a result count will be shown. This option should be set to "Only Admins can View and Edit".
+
+For example, to display a `severity` summary field where the  `severity` field is on the `_source` attribute you would do:
+
+```
+_source.severity 
+```
+
+If you wanted to include a label you would do:
+
+```
+Severity:_source.severity
+```
+
+### Details Fields
+
+Comma delimited list of field names to include as part of the details block. JSON dot notation can be used to target nested attributes including fields inside the `_source` attribute. Fields must be returned by your search query to be displayed. You can change the label for your fields by prepending the label to the field path and separating it with a colon (i.e., "<label>:<json path>"). If left blank, all fields will be shown. This option should be set to "Only Admins can View and Edit".
+
+For example, to display three fields called 'severity', 'falsePositive', and 'confidence' which are on the `_source` object you would do:
+
+```
+Severity:_source.severity, False Positive?:_source.falsePositive, Confidence:_source.confidence 
+```
 
 ### Document Title Field
 
