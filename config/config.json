@@ -1,15 +1,12 @@
 {
   "name": "Elasticsearch",
   "acronym": "ES",
+  "defaultColor": "light-grey",
   "logging": {
     "level": "info"
   },
-  "entityTypes": [
-    "*"
-  ],
-  "styles": [
-    "./styles/es.less"
-  ],
+  "entityTypes": ["*"],
+  "styles": ["./styles/es.less"],
   "block": {
     "component": {
       "file": "./component/es.js"

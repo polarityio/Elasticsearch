@@ -1,6 +1,7 @@
 module.exports = {
   name: 'Elasticsearch',
   acronym: 'ES',
+  defaultColor: 'light-grey',
   logging: { level: 'info' },
   entityTypes: ['*'],
   styles: ['./styles/es.less'],
@@ -140,7 +141,7 @@ module.exports = {
       key: 'summaryFields',
       name: 'Summary Fields',
       description:
-          'Comma delimited list of field names to include as part of the summary tags.  JSON dot notation can be used to target nested attributes including fields inside the `_source` attribute. Fields must be returned by your search query to be displayed.  You can change the label for your fields by prepending the label to the field path and separating it with a colon (i.e., "<label>:<json path>").  If left blank, a result count will be shown. This option should be set to "Only Admins can View and Edit".',
+        'Comma delimited list of field names to include as part of the summary tags.  JSON dot notation can be used to target nested attributes including fields inside the `_source` attribute. Fields must be returned by your search query to be displayed.  You can change the label for your fields by prepending the label to the field path and separating it with a colon (i.e., "<label>:<json path>").  If left blank, a result count will be shown. This option should be set to "Only Admins can View and Edit".',
       default: '',
       type: 'text',
       userCanEdit: false,
@@ -150,7 +151,7 @@ module.exports = {
       key: 'detailFields',
       name: 'Details Fields',
       description:
-          'Comma delimited list of field names to include as part of the details block.  JSON dot notation can be used to target nested attributes including fields inside the `_source` attribute. Fields must be returned by your search query to be displayed.  You can change the label for your fields by prepending the label to the field path and separating it with a colon (i.e., "<label>:<json path>").  If left blank, all fields will be shown. This option should be set to "Only Admins can View and Edit".',
+        'Comma delimited list of field names to include as part of the details block.  JSON dot notation can be used to target nested attributes including fields inside the `_source` attribute. Fields must be returned by your search query to be displayed.  You can change the label for your fields by prepending the label to the field path and separating it with a colon (i.e., "<label>:<json path>").  If left blank, all fields will be shown. This option should be set to "Only Admins can View and Edit".',
       default: '',
       type: 'text',
       userCanEdit: false,
