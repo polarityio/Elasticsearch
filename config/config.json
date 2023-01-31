@@ -1,7 +1,7 @@
 {
   "name": "Elasticsearch",
   "acronym": "ES",
-  "defaultColor": "light-grey",
+  "defaultColor": "light-gray",
   "logging": {
     "level": "info"
   },
