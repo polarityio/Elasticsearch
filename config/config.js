@@ -1,7 +1,7 @@
 module.exports = {
   name: 'Elasticsearch',
   acronym: 'ES',
-  defaultColor: 'light-grey',
+  defaultColor: 'light-gray',
   logging: { level: 'info' },
   entityTypes: ['*'],
   styles: ['./styles/es.less'],
