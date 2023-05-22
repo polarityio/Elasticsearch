@@ -408,7 +408,7 @@ function _getDetailBlockValues(hitResult) {
   return values;
 }
 
-function _getSummaryTags(searchItemResult) {
+function _getSummaryTags(searchItemResult, options) {
   let tags = [];
   let uniqueValues = new Set();
 
@@ -430,6 +430,12 @@ function _getSummaryTags(searchItemResult) {
       }
     });
   });
+
+  if (tags.length > options.maxSummaryTags && options.maxSummaryTags > 0) {
+    let length = tags.length;
+    tags = tags.slice(0, options.maxSummaryTags);
+    tags.push(`+${length - options.maxSummaryTags} more`);
+  }
 
   return tags;
 }
@@ -537,7 +543,7 @@ function _lookupEntityGroup(entityGroup, summaryFields, options, cb) {
             summary: [],
             details: {
               results: hits,
-              tags: _getSummaryTags(searchItemResult),
+              tags: _getSummaryTags(searchItemResult, options),
               queries: queryObject.multiSearchQueries
             }
           }

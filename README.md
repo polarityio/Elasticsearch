@@ -109,6 +109,10 @@ If you wanted to include a label you would do:
 Severity:_source.severity
 ```
 
+### Maximum Number of Summary Fields
+
+The maximum number of summary field tags to display in the Overlay Window before showing a count.
+
 ### Details Fields
 
 Comma delimited list of field names to include as part of the details block. JSON dot notation can be used to target nested attributes including fields inside the `_source` attribute. Fields must be returned by your search query to be displayed. You can change the label for your fields by prepending the label to the field path and separating it with a colon (i.e., "<label>:<json path>"). If left blank, all fields will be shown. This option should be set to "Only Admins can View and Edit".
