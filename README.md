@@ -81,6 +81,10 @@ If you'd like to search a specific time range you can do that using normal Elast
 
 If checked, the integration will display highlighted search terms via the Elasticsearch Highlighter.  For more information on the Elasticsearch Highlighter please see the following documentation: https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-highlighting.html
 
+**Only text, match_only_text, and keyword fields are highlighted due to the use of wildcard fields.**
+
+> Highlights are only supported in Elasticsearch versions 7+
+
 ### Highlight Query
 
 The highlighter query to execute when a user clicks to view additional details. The top level property should be a `query` object. This query should typically match the query portion of your `Search Query`. Highlighting will attempt to highlight against all fields and will return the first 10 results. Only runs if the `Enable Highlighting` option is checked
@@ -104,6 +108,10 @@ If you wanted to include a label you would do:
 ```
 Severity:_source.severity
 ```
+
+### Maximum Number of Summary Fields
+
+The maximum number of summary field tags to display in the Overlay Window before showing a count.
 
 ### Details Fields
 

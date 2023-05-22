@@ -148,6 +148,16 @@ module.exports = {
       adminOnly: true
     },
     {
+      key: 'maxSummaryTags',
+      name: 'Maximum Number of Summary Tags',
+      description:
+          'The maximum number of summary tags to display in the Overlay Window before showing a count.  If set to 0, all tags will be shown.',
+      default: 5,
+      type: 'number',
+      userCanEdit: false,
+      adminOnly: true
+    },
+    {
       key: 'detailFields',
       name: 'Details Fields',
       description:

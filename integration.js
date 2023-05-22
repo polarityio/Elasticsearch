@@ -352,7 +352,6 @@ function _buildOnDetailsQuery(entityObj, documentIds, options) {
     _source: false,
     query: {
       ids: {
-        type: '_doc',
         values: documentIds
       }
     },
@@ -409,14 +408,14 @@ function _getDetailBlockValues(hitResult) {
   return values;
 }
 
-function _getSummaryTags(searchItemResult) {
+function _getSummaryTags(searchItemResult, options) {
   let tags = [];
   let uniqueValues = new Set();
 
   searchItemResult.hits.hits.forEach((result) => {
     summaryFieldsCompiled.forEach((rule) => {
       let value = _.get(result, rule.path, null);
-      let alreadyExists = uniqueValues.has(value);
+      let alreadyExists = uniqueValues.has(normalizeSummaryTagValue(value));
 
       if (!alreadyExists) {
         if (value !== null) {
@@ -426,13 +425,26 @@ function _getSummaryTags(searchItemResult) {
             tags.push(value);
           }
 
-          uniqueValues.add(value);
+          uniqueValues.add(normalizeSummaryTagValue(value));
         }
       }
     });
   });
 
+  if (tags.length > options.maxSummaryTags && options.maxSummaryTags > 0) {
+    let length = tags.length;
+    tags = tags.slice(0, options.maxSummaryTags);
+    tags.push(`+${length - options.maxSummaryTags} more`);
+  }
+
   return tags;
+}
+
+function normalizeSummaryTagValue(value) {
+  if (value !== null) {
+    return value.toLowerCase().trim();
+  }
+  return null;
 }
 
 function CompileException(message) {
@@ -531,7 +543,7 @@ function _lookupEntityGroup(entityGroup, summaryFields, options, cb) {
             summary: [],
             details: {
               results: hits,
-              tags: _getSummaryTags(searchItemResult),
+              tags: _getSummaryTags(searchItemResult, options),
               queries: queryObject.multiSearchQueries
             }
           }
@@ -697,9 +709,31 @@ function validateOptions(userOptions, cb) {
     (typeof userOptions.query.value === 'string' && userOptions.query.value.length === 0)
   ) {
     errors.push({
-      key: 'type',
-      message: 'You must provide a valid Search Query'
+      key: 'query',
+      message: 'You must provide a Search Query'
     });
+  } else {
+    try {
+      JSON.parse(userOptions.query.value);
+    } catch (e) {
+      errors.push({
+        key: 'query',
+        message:
+          'You must provide a valid JSON Search Query.  Ensure the query is valid JSON notation. (Hint: check for missing opening or closing braces, parens and brackets.)'
+      });
+    }
+  }
+
+  if (userOptions.highlightEnabled.value === true) {
+    try {
+      JSON.parse(userOptions.highlightQuery.value);
+    } catch (e) {
+      errors.push({
+        key: 'highlightQuery',
+        message:
+          'You must provide a valid JSON Search Query for the Highlight Query.  Ensure the query is valid JSON notation. (Hint: check for missing/extra opening or closing braces, parens and brackets.)'
+      });
+    }
   }
 
   cb(null, errors);
