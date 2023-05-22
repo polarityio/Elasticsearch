@@ -441,10 +441,10 @@ function _getSummaryTags(searchItemResult, options) {
 }
 
 function normalizeSummaryTagValue(value) {
-  if (value !== null) {
+  if (value !== null && typeof value === 'string') {
     return value.toLowerCase().trim();
   }
-  return null;
+  return value;
 }
 
 function CompileException(message) {
