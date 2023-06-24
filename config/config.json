@@ -120,6 +120,15 @@
       "adminOnly": true
     },
     {
+      "key": "defaultPageSize",
+      "name": "Page Size",
+      "description": "The number of results to display per page.  This value must be between 1 and 100. Defaults to 10.",
+      "default": 10,
+      "type": "number",
+      "userCanEdit": false,
+      "adminOnly": true
+    },
+    {
       "key": "summaryFields",
       "name": "Summary Fields",
       "description": "Comma delimited list of field names to include as part of the summary tags.  JSON dot notation can be used to target nested attributes including fields inside the `_source` attribute. Fields must be returned by your search query to be displayed.  You can change the label for your fields by prepending the label to the field path and separating it with a colon (i.e., \"<label>:<json path>\").  If left blank, a result count will be shown. This option should be set to \"Only Admins can View and Edit\".",

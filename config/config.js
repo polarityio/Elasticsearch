@@ -138,6 +138,15 @@ module.exports = {
       adminOnly: true
     },
     {
+      key: 'defaultPageSize',
+      name: 'Page Size',
+      description: 'The number of results to display per page.  This value must be between 1 and 100. Defaults to 10.',
+      default: 10,
+      type: 'number',
+      userCanEdit: false,
+      adminOnly: true
+    },
+    {
       key: 'summaryFields',
       name: 'Summary Fields',
       description:
@@ -151,7 +160,7 @@ module.exports = {
       key: 'maxSummaryTags',
       name: 'Maximum Number of Summary Tags',
       description:
-          'The maximum number of summary tags to display in the Overlay Window before showing a count.  If set to 0, all tags will be shown.',
+        'The maximum number of summary tags to display in the Overlay Window before showing a count.  If set to 0, all tags will be shown.',
       default: 5,
       type: 'number',
       userCanEdit: false,

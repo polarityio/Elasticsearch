@@ -135,4 +135,21 @@
           {{/if}}
         {{/if}}
     {{/each}}
+
+    <div class="paging-container mt-1 d-flex align-items-center justify-content-between">
+      <div>
+        <span class="next-hit-stats">{{block.acronym}} Results {{block._state.paging.startItem}} to {{block._state.paging.endItem}} of {{details.totalResults}}</span>
+        {{#if block._state.searchRunning}}
+          {{fa-icon icon="spinner-third" fixedWidth=true spin=true}}
+        {{/if}}
+      </div>
+      {{#unless block._state.paging.allResultsReturned}}
+        <div>
+          <button title="First Page" {{action "setPage" block._state.paging.firstPageIndex}} class="btn text-polarity naked" disabled={{block._state.paging.disablePrevButtons}}>{{fa-icon icon="chevron-double-left" fixedWidth=true}}</button>
+          <button title="Previous Page" {{action "setPage" block._state.paging.prevPageIndex}} class="btn text-polarity naked" disabled={{block._state.paging.disablePrevButtons}}>{{fa-icon icon="chevron-left" fixedWidth=true}}</button>
+          <button title="Next Page" {{action "setPage" block._state.paging.nextPageIndex}} class="btn text-polarity naked" disabled={{block._state.paging.disableNextButtons}}>{{fa-icon icon="chevron-right" fixedWidth=true}}</button>
+          <button title="Last Page" {{action "setPage" block._state.paging.lastPageIndex}} class="btn text-polarity naked" disabled={{block._state.paging.disableNextButtons}}>{{fa-icon icon="chevron-double-right" fixedWidth=true}}</button>
+        </div>
+      {{/unless}}
+    </div>
 {{/if}}

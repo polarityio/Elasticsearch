@@ -21,12 +21,11 @@ polarity.export = PolarityComponent.extend({
       this.set('block._state', {});
       this.set('block._state.searchRunning', false);
       this.set('block._state.highlightsLoading', false);
+      this.set('block._state.paging', {});
+      this.updatePageParameters();
     }
 
-    if (
-      !this.get('details.highlights') &&
-      !this.get('isSearchLimitReached')
-    ) {
+    if (!this.get('details.highlights') && !this.get('isSearchLimitReached')) {
       this.loadHighlights();
     }
   },
@@ -67,7 +66,51 @@ polarity.export = PolarityComponent.extend({
     },
     toggleTabs: function (index) {
       this.toggleProperty('details.results.' + index + '.showTabs', false);
+    },
+    setPage(fromIndex) {
+      this.runSearch(fromIndex);
     }
+  },
+  updatePageParameters() {
+    let from = +this.get('details.from');
+    let size = +this.get('details.size');
+    let totalResults = this.get('details.totalResults');
+
+    console.info(`From: ${from}, Size: ${size}, Total Results: ${totalResults}`);
+
+    if (totalResults < size) {
+      this.set('block._state.paging.allResultsReturned', true);
+    }
+
+    this.set('block._state.paging.startItem', from + 1);
+    this.set('block._state.paging.endItem', from + size + 1 > totalResults ? totalResults : from + size);
+
+    const finalPagingIndex = totalResults % size === 0 ? totalResults - size : totalResults - (totalResults % size);
+    const nextPageIndex = from + size >= totalResults - 1 ? finalPagingIndex : from + size;
+    const prevPageIndex = from - size < 0 ? 0 : from - size;
+    const firstPageIndex = 0;
+    const lastPageIndex = size < totalResults ? finalPagingIndex : 0;
+
+    this.set('block._state.paging.nextPageIndex', nextPageIndex);
+    this.set('block._state.paging.prevPageIndex', prevPageIndex);
+    this.set('block._state.paging.firstPageIndex', firstPageIndex);
+    this.set('block._state.paging.lastPageIndex', lastPageIndex);
+
+    // There are no more pages to show so we can disable the next buttons
+    if (this.get('block._state.paging.endItem') === totalResults) {
+      this.set('block._state.paging.disableNextButtons', true);
+    } else {
+      this.set('block._state.paging.disableNextButtons', false);
+    }
+
+    // There are no more pages to show so we can disable the prev buttons
+    if (this.get('block._state.paging.startItem') === 1) {
+      this.set('block._state.paging.disablePrevButtons', true);
+    } else {
+      this.set('block._state.paging.disablePrevButtons', false);
+    }
+
+    console.info('Paging Values', this.get('block._state.paging'));
   },
   _initSource(index) {
     if (typeof this.get('details.results.' + index + '.sourceStringified') === 'undefined') {
@@ -114,7 +157,8 @@ polarity.export = PolarityComponent.extend({
     const payload = {
       action: 'HIGHLIGHT',
       documentIds,
-      entity: this.get('block.entity')
+      entity: this.get('block.entity'),
+      from: this.get('details.from')
     };
 
     this.sendIntegrationMessage(payload)
@@ -136,13 +180,16 @@ polarity.export = PolarityComponent.extend({
         this.get('block').notifyPropertyChange('data');
       });
   },
-  runSearch() {
+  runSearch(from = 0) {
     this.set('block._state.errorMessage', '');
     this.set('block._state.searchRunning', true);
+    this.set('block._state.paging.disableNextButtons', true);
+    this.set('block._state.paging.disablePrevButtons', true);
 
     const payload = {
       action: 'SEARCH',
-      entity: this.get('block.entity')
+      entity: this.get('block.entity'),
+      from
     };
 
     this.sendIntegrationMessage(payload)
@@ -163,6 +210,7 @@ polarity.export = PolarityComponent.extend({
       })
       .finally(() => {
         this.set('block._state.searchRunning', false);
+        this.updatePageParameters();
       });
   },
   /**
@@ -175,11 +223,11 @@ polarity.export = PolarityComponent.extend({
   },
   initHighlights() {
     this.get('details.results').forEach((result, index) => {
-        this._initSource(index);
-        Ember.set(result, 'showHighlights', false);
-        Ember.set(result, 'showTable', true);
-        Ember.set(result, 'showJson', false);
-        Ember.set(result, 'showSource', false);
+      this._initSource(index);
+      Ember.set(result, 'showHighlights', false);
+      Ember.set(result, 'showTable', true);
+      Ember.set(result, 'showJson', false);
+      Ember.set(result, 'showSource', false);
     });
   }
 });
