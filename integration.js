@@ -352,7 +352,11 @@ function escapeEntityValue(entityValue) {
 }
 
 function _buildOnDetailsQuery(entityObj, documentIds, options) {
-  const { queryString, from, size } = _getQueryWithPaging(options.highlightQuery, options.defaultPageSize, options._fromIndex);
+  const { queryString, from, size } = _getQueryWithPaging(
+    options.highlightQuery,
+    options.defaultPageSize,
+    options._fromIndex
+  );
 
   const highlightQuery = queryString.replace(entityTemplateReplacementRegex, escapeEntityValue(entityObj.value));
 
@@ -760,6 +764,14 @@ function validateOptions(userOptions, cb) {
           'You must provide a valid JSON Search Query for the Highlight Query.  Ensure the query is valid JSON notation. (Hint: check for missing/extra opening or closing braces, parens and brackets.)'
       });
     }
+  }
+
+  if (userOptions.defaultPageSize.value < 1 || userOptions.defaultPageSize.value > 100) {
+    errors.push({
+      key: 'defaultPageSize',
+      message:
+        'The page size must be between 1 and 100.'
+    });
   }
 
   cb(null, errors);
