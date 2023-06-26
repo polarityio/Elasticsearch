@@ -78,7 +78,7 @@ polarity.export = PolarityComponent.extend({
 
     console.info(`From: ${from}, Size: ${size}, Total Results: ${totalResults}`);
 
-    if (totalResults < size) {
+    if (totalResults <= size) {
       this.set('block._state.paging.allResultsReturned', true);
     }
 

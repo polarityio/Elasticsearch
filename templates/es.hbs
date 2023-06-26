@@ -138,9 +138,13 @@
 
     <div class="paging-container mt-1 d-flex align-items-center justify-content-between">
       <div>
-        <span class="next-hit-stats">{{block.acronym}} Results {{block._state.paging.startItem}} to {{block._state.paging.endItem}} of {{details.totalResults}}</span>
-        {{#if block._state.searchRunning}}
-          {{fa-icon icon="spinner-third" fixedWidth=true spin=true}}
+        {{#if block._state.paging.allResultsReturned}}
+          <span class="next-hit-stats">Showing all {{details.totalResults}} {{block.acronym}} results</span>
+        {{else}}
+          <span class="next-hit-stats">{{block.acronym}} Results {{block._state.paging.startItem}} to {{block._state.paging.endItem}} of {{details.totalResults}}</span>
+          {{#if block._state.searchRunning}}
+            {{fa-icon icon="spinner-third" fixedWidth=true spin=true}}
+          {{/if}}
         {{/if}}
       </div>
       {{#unless block._state.paging.allResultsReturned}}
