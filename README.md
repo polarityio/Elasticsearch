@@ -53,29 +53,37 @@ kibana_sample_data_logs,kibana_sample_data_flights
 
 The search query to execute as JSON. The top level property should be a `query` object and must be a valid JSON search request when sent to the ES `_search` REST endpoint.  The search query can make use of the templated variable `{{entity}}` which will be replaced by the entity recognized on the user's screen.
 
+You should not specify `size` and `from` parameters as these parameters are controlled with the "Page Size" option.
+
 As an example, with the search query defined as:
 
 ```
-{"query": { "simple_query_string": { "query": "\"{{entity}}\"" } }, "from": 0, "size": 10, "sort": [ {"timestamp": "desc" } ] } }
+{"query": { "simple_query_string": { "query": "\"{{entity}}\"" } }, "sort": [ {"timestamp": "desc" } ] } }
 ```
 
 If the user has the IP 8.8.8.8 on their screen the integration will execute the following query:
 
 ```
-{"query": { "simple_query_string": { "query": "\"8.8.8.8\"" } }, "from": 0, "size": 10, "sort": [ {"timestamp": "desc" } ] } }
+{"query": { "simple_query_string": { "query": "\"8.8.8.8\"" } }, "sort": [ {"timestamp": "desc" } ] } }
 ```
 
 If you'd like to search certain fields you can use the `fields` property along with the `simple_query_string`.  For example, to only search the `ip` field you could use the following search:
 
 ```
-{"query": { "simple_query_string": { "query": "\"{{entity}}\"", "fields": ["ip"]}}, "from": 0, "size": 10, "sort": [ {"timestamp": "desc" } ] } }
+{"query": { "simple_query_string": { "query": "\"{{entity}}\"", "fields": ["ip"]}}, "sort": [ {"timestamp": "desc" } ] } }
 ```
 
 If you'd like to search a specific time range you can do that using normal Elasticsearch JSON search syntax.  For example, do search data from the last 365 days you can use the following query assuming your timestamp field is called `timestamp`.  
 
 ```
-{"query": { "bool": { "must": [ { "range": {"timestamp": {"gte": "now-365d/d","lt": "now/d"}}},{"query_string": {"query":"\"{{entity}}\""}}]}},"from": 0,"size": 10}
+{"query": { "bool": { "must": [ { "range": {"timestamp": {"gte": "now-365d/d","lt": "now/d"}}},{"query_string": {"query":"\"{{entity}}\""}}]}}}
 ```
+
+### Page Size
+
+The number of results to display per page. This value must be between 1 and 100. Defaults to 10. This option should be set to "Only admins can view and edit".
+
+> **Important** The Page Size option is used to set the `size` and `from` search parameters in the query.  If you set these values directly in your query, they will be overridden by the Page Size option.  As an example, if you set the Page Size to 10, then `size` will be set to 10, and `from` will be set to 0.
 
 ### Enable Highlighting
 
@@ -87,7 +95,7 @@ If checked, the integration will display highlighted search terms via the Elasti
 
 ### Highlight Query
 
-The highlighter query to execute when a user clicks to view additional details. The top level property should be a `query` object. This query should typically match the query portion of your `Search Query`. Highlighting will attempt to highlight against all fields and will return the first 10 results. Only runs if the `Enable Highlighting` option is checked
+The highlighter query to execute when a user clicks to view additional details. The top level property should be a `query` object. This query should typically match the query portion of your `Search Query`. Highlighting will attempt to highlight against all fields. Only runs if the `Enable Highlighting` option is checked
 
 ```
 {"query": { "simple_query_string": { "query": "\"{{entity}}\"" } } }

@@ -86,6 +86,10 @@ function getAuthHeader(options, headers = {}) {
   }
 }
 
+function parseErrorToReadableJSON(error) {
+  return JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error)));
+}
+
 function doLookup(entities, options, cb) {
   const filteredEntities = [];
   let errors = [];
@@ -162,7 +166,7 @@ function doLookup(entities, options, cb) {
         });
       } else if (err) {
         // a regular error occurred that is not a search limit related error
-        errors.push(err);
+        errors.push(parseErrorToReadableJSON(err));
         // this error is returned for all the entities in the entity group so we need to count that entire group
         // as having errors
         errorCount += entityGroup.length;
@@ -198,6 +202,7 @@ function doLookup(entities, options, cb) {
             errors
           });
         } else {
+          log.trace({ lookupResults }, 'Lookup Results');
           cb(null, lookupResults);
         }
       }
@@ -207,7 +212,8 @@ function doLookup(entities, options, cb) {
 
 function reachedSearchLimit(err, results) {
   const maxRequestQueueLimitHit =
-    (_.isEmpty(err) && _.isEmpty(results)) || (err && err.message === 'This job has been dropped by Bottleneck');
+    ((err === null || typeof err === 'undefined') && _.isEmpty(results)) ||
+    (err && err.message === 'This job has been dropped by Bottleneck');
 
   let statusCode = Number.parseInt(_.get(err, 'errors.0.status', 0), 10);
   const isGatewayTimeout = statusCode === 502 || statusCode === 504 || statusCode === 500;
@@ -279,12 +285,14 @@ function onMessage(payload, options, cb) {
   switch (payload.action) {
     case 'HIGHLIGHT':
       if (options.highlightEnabled) {
+        options._fromIndex = payload.from;
         loadHighlights(payload.entity, payload.documentIds, options, cb);
       } else {
         cb(null, {});
       }
       break;
     case 'SEARCH':
+      options._fromIndex = payload.from;
       doLookup([payload.entity], options, (searchErr, lookupResults) => {
         if (searchErr) {
           log.error({ searchErr }, 'Error running search');
@@ -344,10 +352,14 @@ function escapeEntityValue(entityValue) {
 }
 
 function _buildOnDetailsQuery(entityObj, documentIds, options) {
-  const highlightQuery = options.highlightQuery.replace(
-    entityTemplateReplacementRegex,
-    escapeEntityValue(entityObj.value)
+  const { queryString, from, size } = _getQueryWithPaging(
+    options.highlightQuery,
+    options.defaultPageSize,
+    options._fromIndex
   );
+
+  const highlightQuery = queryString.replace(entityTemplateReplacementRegex, escapeEntityValue(entityObj.value));
+
   return {
     _source: false,
     query: {
@@ -365,9 +377,18 @@ function _buildOnDetailsQuery(entityObj, documentIds, options) {
       encoder: 'html',
       fragment_size: 200
     },
-    from: 0,
-    size: 10
+    from,
+    size
   };
+}
+
+function _getQueryWithPaging(queryString, pageSize, fromIndex = 0) {
+  const queryObject = JSON.parse(queryString);
+
+  queryObject.from = fromIndex;
+  queryObject.size = pageSize;
+
+  return { queryString: JSON.stringify(queryObject), from: queryObject.from, size: queryObject.size };
 }
 
 /**
@@ -383,13 +404,14 @@ function _buildOnDetailsQuery(entityObj, documentIds, options) {
 function _buildDoLookupQuery(entities, options) {
   let multiSearchString = '';
   const multiSearchQueries = [];
+  const { queryString, from, size } = _getQueryWithPaging(options.query, options.defaultPageSize, options._fromIndex);
 
   entities.forEach((entityObj) => {
-    const query = options.query.replace(entityTemplateReplacementRegex, escapeEntityValue(entityObj.value));
+    const query = queryString.replace(entityTemplateReplacementRegex, escapeEntityValue(entityObj.value));
     multiSearchString += `{}\n${query}\n`;
     multiSearchQueries.push(query);
   });
-  return { multiSearchString, multiSearchQueries };
+  return { multiSearchString, multiSearchQueries, from, size };
 }
 
 function _getDetailBlockValues(hitResult) {
@@ -542,6 +564,9 @@ function _lookupEntityGroup(entityGroup, summaryFields, options, cb) {
           data: {
             summary: [],
             details: {
+              totalResults: searchItemResult.hits.total.value,
+              from: queryObject.from,
+              size: queryObject.size,
               results: hits,
               tags: _getSummaryTags(searchItemResult, options),
               queries: queryObject.multiSearchQueries
@@ -654,7 +679,7 @@ function _handleRestErrors(response, body) {
         });
         if (hasQueryError) {
           return _createJsonErrorObject(
-            'Search query error encoutered.  Please check your Search Query syntax.',
+            'Search query error encountered.  Please check your Search Query syntax.',
             null,
             response.statusCode,
             '7',
@@ -734,6 +759,13 @@ function validateOptions(userOptions, cb) {
           'You must provide a valid JSON Search Query for the Highlight Query.  Ensure the query is valid JSON notation. (Hint: check for missing/extra opening or closing braces, parens and brackets.)'
       });
     }
+  }
+
+  if (userOptions.defaultPageSize.value < 1 || userOptions.defaultPageSize.value > 100) {
+    errors.push({
+      key: 'defaultPageSize',
+      message: 'The page size must be between 1 and 100.'
+    });
   }
 
   cb(null, errors);
