@@ -118,6 +118,15 @@ module.exports = {
       adminOnly: true
     },
     {
+      key: 'defaultPageSize',
+      name: 'Page Size',
+      description: 'The number of results to display per page.  This value must be between 1 and 100. Defaults to 10.  This option should be set to "Only admins can view and edit".',
+      default: 10,
+      type: 'number',
+      userCanEdit: false,
+      adminOnly: true
+    },
+    {
       key: 'highlightEnabled',
       name: 'Enable Highlighting',
       description:
@@ -134,15 +143,6 @@ module.exports = {
         'The highlighter query to execute when a user clicks to view additional details. The top level property should be a `query` object. This query should typically match the query portion of your `Search Query`.  Highlighting will attempt to highlight against all fields.  Only runs if the `Enable Highlighting` option is checked',
       default: '{"query": { "simple_query_string": { "query": "\\"{{entity}}\\"" } } }',
       type: 'text',
-      userCanEdit: false,
-      adminOnly: true
-    },
-    {
-      key: 'defaultPageSize',
-      name: 'Page Size',
-      description: 'The number of results to display per page.  This value must be between 1 and 100. Defaults to 10.  This option should be set to "Only admins can view and edit".',
-      default: 10,
-      type: 'number',
       userCanEdit: false,
       adminOnly: true
     },

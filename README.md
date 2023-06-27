@@ -79,6 +79,12 @@ If you'd like to search a specific time range you can do that using normal Elast
 {"query": { "bool": { "must": [ { "range": {"timestamp": {"gte": "now-365d/d","lt": "now/d"}}},{"query_string": {"query":"\"{{entity}}\""}}]}}}
 ```
 
+### Page Size
+
+The number of results to display per page. This value must be between 1 and 100. Defaults to 10. This option should be set to "Only admins can view and edit".
+
+> **Important** The Page Size option is used to set the `size` and `from` search parameters in the query.  If you set these values directly in your query, they will be overridden by the Page Size option.  As an example, if you set the Page Size to 10, then `size` will be set to 10, and `from` will be set to 0.
+
 ### Enable Highlighting
 
 If checked, the integration will display highlighted search terms via the Elasticsearch Highlighter.  For more information on the Elasticsearch Highlighter please see the following documentation: https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-highlighting.html
@@ -94,10 +100,6 @@ The highlighter query to execute when a user clicks to view additional details. 
 ```
 {"query": { "simple_query_string": { "query": "\"{{entity}}\"" } } }
 ```
-
-### Page Size
-
-The number of results to display per page. This value must be between 1 and 100. Defaults to 10. This option should be set to "Only admins can view and edit".
 
 ### Summary Fields
 
