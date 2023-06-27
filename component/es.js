@@ -76,8 +76,6 @@ polarity.export = PolarityComponent.extend({
     let size = +this.get('details.size');
     let totalResults = this.get('details.totalResults');
 
-    console.info(`From: ${from}, Size: ${size}, Total Results: ${totalResults}`);
-
     if (totalResults <= size) {
       this.set('block._state.paging.allResultsReturned', true);
     }
@@ -109,8 +107,6 @@ polarity.export = PolarityComponent.extend({
     } else {
       this.set('block._state.paging.disablePrevButtons', false);
     }
-
-    console.info('Paging Values', this.get('block._state.paging'));
   },
   _initSource(index) {
     if (typeof this.get('details.results.' + index + '.sourceStringified') === 'undefined') {
