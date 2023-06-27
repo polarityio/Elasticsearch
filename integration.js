@@ -385,13 +385,8 @@ function _buildOnDetailsQuery(entityObj, documentIds, options) {
 function _getQueryWithPaging(queryString, pageSize, fromIndex = 0) {
   const queryObject = JSON.parse(queryString);
 
-  if (!queryObject.from) {
-    queryObject.from = fromIndex;
-  }
-
-  if (!queryObject.size) {
-    queryObject.size = pageSize;
-  }
+  queryObject.from = fromIndex;
+  queryObject.size = pageSize;
 
   return { queryString: JSON.stringify(queryObject), from: queryObject.from, size: queryObject.size };
 }
@@ -769,8 +764,7 @@ function validateOptions(userOptions, cb) {
   if (userOptions.defaultPageSize.value < 1 || userOptions.defaultPageSize.value > 100) {
     errors.push({
       key: 'defaultPageSize',
-      message:
-        'The page size must be between 1 and 100.'
+      message: 'The page size must be between 1 and 100.'
     });
   }
 
