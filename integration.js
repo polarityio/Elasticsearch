@@ -679,7 +679,7 @@ function _handleRestErrors(response, body) {
         });
         if (hasQueryError) {
           return _createJsonErrorObject(
-            'Search query error encoutered.  Please check your Search Query syntax.',
+            'Search query error encountered.  Please check your Search Query syntax.',
             null,
             response.statusCode,
             '7',
