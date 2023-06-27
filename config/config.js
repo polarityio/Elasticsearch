@@ -36,7 +36,7 @@ module.exports = {
     ca: '',
     // An HTTP proxy to be used. Supports proxy Auth with Basic Auth, identical to support for
     // the url parameter (by embedding the auth info in the uri)
-    proxy: ""
+    proxy: '',
     // Some ES server may require that you force TLS1.2 to be used.  To do this, set the `secureProtocol`
     // property to 'TLSv1_2_method'.
     secureProtocol: ''
