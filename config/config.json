@@ -34,7 +34,6 @@
     "passphrase": "",
     "ca": "",
     "proxy": "",
-    "rejectUnauthorized": true,
     "secureProtocol": ""
   },
   "options": [
