@@ -87,7 +87,11 @@ function getAuthHeader(options, headers = {}) {
 }
 
 function parseErrorToReadableJSON(error) {
-  return JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  if (error instanceof Error) {
+    return JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  } else {
+    return error;
+  }
 }
 
 function doLookup(entities, options, cb) {
@@ -685,7 +689,7 @@ function _handleRestErrors(response, body) {
             '7',
             'There is an error with the search query.',
             {
-              body: body
+              body
             }
           );
         }
