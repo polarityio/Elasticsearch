@@ -106,7 +106,7 @@ module.exports = {
       description:
         "The search query to execute as JSON.  The top level property should be a `query` object and must be a valid JSON search request when sent to the ES `_search` REST endpoint. Use the 'Page Size' option to control 'size' and 'from' parameters.",
       default:
-        '{"query": { "simple_query_string": { "query": "\\"{{entity}}\\"" } }, "from": 0, "size": 10, "sort": [ {"timestamp": "desc" } ] } }',
+        '{"query": { "simple_query_string": { "query": "\\"{{entity}}\\"" } }, "from": 0, "size": 10 }',
       type: 'text',
       userCanEdit: false,
       adminOnly: true
