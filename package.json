@@ -1,6 +1,6 @@
 {
   "name": "Elasticsearch",
-  "version": "3.6.3",
+  "version": "3.6.4",
   "main": "./integration.js",
   "description": "Search your data in real-time",
   "private": true,
