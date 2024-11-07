@@ -1,11 +1,11 @@
 {
   "name": "Elasticsearch",
-  "version": "3.6.3",
+  "version": "3.6.4",
   "main": "./integration.js",
   "description": "Search your data in real-time",
   "private": true,
   "dependencies": {
-    "postman-request": "^2.88.1-postman.33",
+    "postman-request": "^2.88.1-postman.40",
     "lodash": "^4.17.21",
     "bottleneck": "^2.19.5"
   },

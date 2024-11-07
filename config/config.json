@@ -7,11 +7,20 @@
     "level": "info"
   },
   "entityTypes": [
-    "*"
+    "IPv4",
+    "IPv4CIDR",
+    "IPv6",
+    "domain",
+    "url",
+    "MD5",
+    "SHA1",
+    "SHA256",
+    "email",
+    "cve",
+    "MAC",
+    "string"
   ],
-  "styles": [
-    "./styles/es.less"
-  ],
+  "styles": ["./styles/es.less"],
   "block": {
     "component": {
       "file": "./component/es.js"
@@ -27,14 +36,6 @@
     "template": {
       "file": "./templates/es-summary.hbs"
     }
-  },
-  "request": {
-    "cert": "",
-    "key": "",
-    "passphrase": "",
-    "ca": "",
-    "proxy": "",
-    "secureProtocol": ""
   },
   "options": [
     {

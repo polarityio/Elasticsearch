@@ -3,7 +3,7 @@ module.exports = {
   acronym: 'ES',
   defaultColor: 'light-gray',
   logging: { level: 'info' },
-  entityTypes: ['*'],
+  entityTypes: ['IPv4', 'IPv4CIDR', 'IPv6', 'domain', 'url', 'MD5', 'SHA1', 'SHA256', 'email', 'cve', 'MAC', 'string'],
   styles: ['./styles/es.less'],
   block: {
     component: {
@@ -105,8 +105,7 @@ module.exports = {
       name: 'Search Query',
       description:
         "The search query to execute as JSON.  The top level property should be a `query` object and must be a valid JSON search request when sent to the ES `_search` REST endpoint. Use the 'Page Size' option to control 'size' and 'from' parameters.",
-      default:
-        '{"query": { "simple_query_string": { "query": "\\"{{entity}}\\"" } }, "from": 0, "size": 10 }',
+      default: '{"query": { "simple_query_string": { "query": "\\"{{entity}}\\"" } }, "from": 0, "size": 10 }',
       type: 'text',
       userCanEdit: false,
       adminOnly: true
@@ -114,7 +113,8 @@ module.exports = {
     {
       key: 'defaultPageSize',
       name: 'Page Size',
-      description: 'The number of results to display per page.  This value must be between 1 and 100. Defaults to 10.  This option should be set to "Only admins can view and edit".',
+      description:
+        'The number of results to display per page.  This value must be between 1 and 100. Defaults to 10.  This option should be set to "Only admins can view and edit".',
       default: 10,
       type: 'number',
       userCanEdit: false,
