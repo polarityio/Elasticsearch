@@ -6,6 +6,8 @@
   "logging": {
     "level": "info"
   },
+  "supportsAdditionalCustomTypes": true,
+  "dataTypes": ["IPv4", "IPv4CIDR", "IPv6", "domain", "url", "MD5", "SHA1", "SHA256", "email", "cve", "MAC", "string"],
   "entityTypes": [
     "IPv4",
     "IPv4CIDR",
