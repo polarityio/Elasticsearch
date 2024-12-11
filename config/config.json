@@ -6,6 +6,24 @@
   "logging": {
     "level": "info"
   },
+  "supportsAdditionalCustomTypes": true,
+  "dataTypes": [
+    "IPv4",
+    "IPv4CIDR",
+    "IPv6",
+    "domain",
+    "url",
+    "MD5",
+    "SHA1",
+    "SHA256",
+    "email",
+    "cve",
+    "MAC",
+    {
+      "type": "string",
+      "enabled": false
+    }
+  ],
   "entityTypes": [
     "IPv4",
     "IPv4CIDR",
@@ -20,7 +38,9 @@
     "MAC",
     "string"
   ],
-  "styles": ["./styles/es.less"],
+  "styles": [
+    "./styles/es.less"
+  ],
   "block": {
     "component": {
       "file": "./component/es.js"
